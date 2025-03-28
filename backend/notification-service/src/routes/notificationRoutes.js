@@ -3,33 +3,23 @@ const Notification = require('../models/Notification');
 const router = express.Router();
 const kafka = require('kafka-node');
 const mongoose = require('mongoose');
-const { getIo } = require('../socket'); // Import getIo function
-// const http = require('http');
-// const { Server } = require('socket.io');
-//const app = express();
-// const server = http.createServer(app);
-// const io = new Server(server);
+const { getIo } = require('../socket');
 
-// const http = require('http');
-// const socketIo = require('socket.io');
+// Create a separate connection to the order-service database
+const orderServiceConnection = mongoose.createConnection(process.env.ORDER_SERVICE_MONGO_URI || 'mongodb://127.0.0.1:27017/order-service', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
 
-// const server = http.createServer((req, res) => {
-//   res.writeHead(200, { 'Content-Type': 'text/plain' });
-//   res.end('Socket.IO server running\n');
-// });
-
-// const io = socketIo(server);
-
-// io.on('connection', (socket) => {
-//   console.log('A client connected');
-
-//   // Emit an event to the client
-//   socket.emit('message', 'Hello from server');
-
-//   socket.on('disconnect', () => {
-//     console.log('A client disconnected');
-//   });
-// });
+// Define Order Schema on the order-service connection
+const Order = orderServiceConnection.model('Order', new mongoose.Schema({
+  userId: String,
+  productId: String,
+  quantity: Number,
+  status: String,
+  orderDate: { type: Date, default: Date.now },
+  lastUpdated: { type: Date, default: Date.now }
+}));
 
 // Kafka configuration
 // Kafka configuration
@@ -59,14 +49,6 @@ const consumerGroup = new kafka.ConsumerGroup(
   ['order-created']
 );
 
-// Define Order Schema
-const Order = mongoose.model('Order', new mongoose.Schema({
-  userId: String,
-  productId: String,
-  quantity: Number,
-  status: String,
-}));
-
 // // Add more consumer event listeners
 // consumer.on('ready', () => {
 //   console.log('Kafka consumer is ready');
@@ -81,42 +63,58 @@ consumerGroup.on('message', async (message) => {
   try {
     console.log('Raw Kafka message received:', message);
     const orderData = JSON.parse(message.value);
+    const currentDate = new Date();
     
     // Create and save notification
     const notification = new Notification({
       userId: orderData.userId,
       message: `New order created for product: ${orderData.productId}`,
       read: false,
-      createdAt: new Date(),
+      createdAt: currentDate,
       orderId: orderData._id,
       orderDate: new Date(orderData.orderDate)
     });
     
-    await notification.save();
+    const savedNotification = await notification.save();
 
-    // Update order status to completed
-    await Order.findByIdAndUpdate(orderData._id, {
-      status: 'Completed',
-      lastUpdated: new Date()
-    });
-
-    // Emit socket event
-    const io = getIo();
-    io.emit('notification', { 
-      type: 'order_created',
-      message: JSON.stringify({
-        orderId: orderData._id,
-        userId: orderData.userId,
-        productId: orderData.productId,
-        quantity: orderData.quantity,
+    // Update order status
+    const updatedOrder = await Order.findByIdAndUpdate(
+      orderData._id,
+      {
         status: 'Completed',
-        orderDate: orderData.orderDate,
-        lastUpdated: new Date()
-      })
+        lastUpdated: currentDate
+      },
+      { new: true }
+    );
+
+    if (!updatedOrder) {
+      throw new Error('Order not found');
+    }
+
+    const notificationMessage = {
+      orderId: orderData._id,
+      notificationId: savedNotification._id,
+      status: 'Completed',
+      lastUpdated: currentDate.toISOString(),
+      productId: orderData.productId
+    };
+
+    // Get the Socket.IO instance
+    const io = getIo();
+    
+    // Emit notification event
+    io.emit('notification', {
+      message: JSON.stringify(notificationMessage)
     });
 
-    console.log('Notification saved and order updated successfully');
-  } catch(err) {
+    // Emit order status update event
+    io.emit('orderStatusUpdate', {
+      orderId: orderData._id,
+      status: 'Completed',
+      lastUpdated: currentDate.toISOString()
+    });
+
+  } catch (err) {
     console.error('Error processing Kafka message:', err);
   }
 });
@@ -196,6 +194,25 @@ router.post('/notify', async (req, res) => {
 router.get('/notifications', async (req, res) => {
   const notifications = await Notification.find();
   res.status(200).send(notifications);
+});
+
+router.put('/markAsRead/:notificationId', async (req, res) => {
+  try {
+    const notification = await Notification.findByIdAndUpdate(
+      req.params.notificationId,
+      { read: true },
+      { new: true }
+    );
+    
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
+    
+    res.status(200).json(notification);
+  } catch (err) {
+    console.error('Error marking notification as read:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
 // Handle socket connections

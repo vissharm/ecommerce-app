@@ -3,7 +3,14 @@ const socketIo = require('socket.io');
 let io;
 
 const initSocket = (server) => {
-  io = socketIo(server);
+  io = socketIo(server, {
+    transports: ['websocket'],  // WebSocket only, no polling
+    allowUpgrades: false,  // Prevent transport upgrades
+    cors: {
+      origin: "http://localhost:3000",
+      methods: ["GET", "POST"]
+    }
+  });
   
   io.on('connection', (socket) => {
     console.log('A client connected');

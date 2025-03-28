@@ -31,16 +31,23 @@ const proxyConfig = {
     changeOrigin: true,
     logLevel: 'debug'
   },
-  '/websocket': {
-    target: 'http://localhost:3003',
-    changeOrigin: true,
-    ws: true
-  },
+  // '/websocket': {
+  //   target: 'http://localhost:3003',
+  //   changeOrigin: true,
+  //   ws: true
+  // },
   '/socket.io': {  // Changed from /websocket to /socket.io
     target: 'http://localhost:3003',
     changeOrigin: true,
     ws: true,
-    logLevel: 'debug'
+    logLevel: 'debug',
+    secure: false,
+    pathRewrite: {
+      '^/socket.io': '/socket.io'
+    },
+    onError: (err, req, res) => {
+      console.error('Proxy error:', err);
+    }
   }
 };
 
@@ -61,6 +68,7 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'build', 'index.html'));
 });
 
+// Change this from app.listen to server.listen
 app.listen(PORT, () => {
   console.log(`API Gateway running on port ${PORT}`);
 });

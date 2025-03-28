@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { 
   Typography, 
@@ -39,19 +39,38 @@ function Notifications() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    setLoading(true);
-    axios.get(`${process.env.REACT_APP_API_URL}/api/notifications/notifications`)
-      .then(res => {
-        setNotifications(Array.isArray(res.data) ? res.data : []);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error fetching notifications:', err);
-        setError('Failed to load notifications');
-        setLoading(false);
-      });
+  const fetchNotifications = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/notifications/notifications`);
+      const sortedNotifications = Array.isArray(res.data) 
+        ? res.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        : [];
+      setNotifications(sortedNotifications);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+      setError('Failed to load notifications');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+
+    // Add event listener for notification updates
+    const handleUpdate = () => {
+      console.log('Notification update event received');
+      fetchNotifications();
+    };
+
+    window.addEventListener('notificationUpdate', handleUpdate);
+    
+    return () => {
+      window.removeEventListener('notificationUpdate', handleUpdate);
+    };
+  }, [fetchNotifications]);
 
   if (loading) {
     return (
@@ -62,16 +81,12 @@ function Notifications() {
   }
 
   if (error) {
-    return (
-      <Typography color="error" style={{ padding: '20px' }}>
-        {error}
-      </Typography>
-    );
+    return <Typography color="error">{error}</Typography>;
   }
 
   return (
-    <div className={classes.root}>
-      <Typography variant="h4" gutterBottom>
+    <div className={classes.root} data-component="notifications">
+      <Typography variant="h5" gutterBottom>
         Notifications
       </Typography>
       

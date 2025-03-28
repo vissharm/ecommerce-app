@@ -19,6 +19,7 @@ import {
 } from '@material-ui/core';
 import AddIcon from '@material-ui/icons/Add';
 import { DateTimePicker } from '@material-ui/pickers';
+import io from 'socket.io-client';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -60,19 +61,78 @@ function Orders() {
   const [quantity, setQuantity] = useState('');
   const [orderDate, setOrderDate] = useState(new Date());
 
+  const fetchOrders = async () => {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/orders/orders`);
+      setOrders(response.data);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
-  }, []);
 
-  const fetchOrders = () => {
-    axios.get(`${process.env.REACT_APP_API_URL}/api/orders/orders`)
-      .then(res => {
-        setOrders(res.data);
-      })
-      .catch(err => {
-        console.error(err);
-      });
-  };
+    // Listen for order status updates
+    const handleOrderUpdate = (event) => {
+      console.log('Order update received:', event.detail);
+      const { orderId, status, lastUpdated } = event.detail;
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order._id === orderId 
+            ? { ...order, status, lastUpdated: new Date(lastUpdated) }
+            : order
+        )
+      );
+    };
+
+    // Listen for both custom event and socket event
+    const orderComponent = document.querySelector('[data-component="orders"]');
+    if (orderComponent) {
+      orderComponent.addEventListener('orderStatusUpdate', handleOrderUpdate);
+    }
+
+    // Listen for socket.io events directly
+    const socket = io(process.env.REACT_APP_SOCKET_URL || window.location.origin);
+    
+    socket.on('orderStatusUpdate', (data) => {
+      console.log('Socket orderStatusUpdate received:', data);
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order._id === data.orderId 
+            ? { ...order, status: data.status, lastUpdated: new Date(data.lastUpdated) }
+            : order
+        )
+      );
+    });
+
+    socket.on('notification', (data) => {
+      console.log('Socket notification received:', data);
+      try {
+        const orderData = JSON.parse(data.message);
+        if (orderData.status && orderData.orderId) {
+          setOrders(prevOrders => 
+            prevOrders.map(order => 
+              order._id === orderData.orderId 
+                ? { ...order, status: orderData.status, lastUpdated: new Date(orderData.lastUpdated) }
+                : order
+            )
+          );
+        }
+      } catch (err) {
+        console.error('Error processing notification:', err);
+      }
+    });
+
+    return () => {
+      // Cleanup
+      if (orderComponent) {
+        orderComponent.removeEventListener('orderStatusUpdate', handleOrderUpdate);
+      }
+      socket.off('orderStatusUpdate');
+      socket.off('notification');
+    };
+  }, []);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => {
@@ -104,7 +164,7 @@ function Orders() {
   };
 
   return (
-    <div className={classes.root}>
+    <div data-component="orders">
       <Typography variant="h4" gutterBottom>
         Orders
       </Typography>

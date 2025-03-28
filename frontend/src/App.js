@@ -6,6 +6,7 @@ import {
 } from 'react-router-dom';
 import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import DateFnsUtils from '@date-io/date-fns';
+import axios from 'axios';
 
 import { Container } from '@material-ui/core';
 import Navbar from './components/Navbar';
@@ -24,8 +25,8 @@ function App() {
     socket.on('connect', () => {
       console.log('Connected to WebSocket server via API Gateway');
     });
-  
-    socket.on('notification', (data) => {
+
+    socket.on('notification', async (data) => {
       console.log('Notification received:', data);
       try {
         const orderData = JSON.parse(data.message);
@@ -45,22 +46,23 @@ function App() {
           }
         }
 
-        // Create a formatted message for the toast
-        const formattedDate = new Date(orderData.orderDate).toLocaleString();
+        // Show toast notification
+        const formattedDate = orderData.lastUpdated 
+          ? new Date(orderData.lastUpdated).toLocaleString()
+          : new Date().toLocaleString();
+
         const toastMessage = (
           <div>
-            <strong>New Order Received</strong>
+            <strong>Order Status Update</strong>
             <br />
-            <span>Product ID: {orderData.productId}</span>
-            <br />
-            <span>Quantity: {orderData.quantity}</span>
+            <span>Order ID: {orderData.orderId}</span>
             <br />
             <span>Status: {orderData.status}</span>
             <br />
-            <span>Date: {formattedDate}</span>
+            <span>Last Updated: {formattedDate}</span>
           </div>
         );
-        
+
         toast(toastMessage, {
           position: "top-right",
           autoClose: 5000,
@@ -73,25 +75,50 @@ function App() {
             background: '#f5f5f5',
             color: '#333',
             borderLeft: '4px solid #4caf50'
+          },
+          onOpen: async () => {
+            try {
+              if (orderData.notificationId) {
+                await axios.put(
+                  `${process.env.REACT_APP_API_URL}/api/notifications/markAsRead/${orderData.notificationId}`
+                );
+                console.log('Notification marked as read:', orderData.notificationId);
+                
+                const notificationsComponent = document.querySelector('[data-component="notifications"]');
+                if (notificationsComponent) {
+                  const event = new CustomEvent('notificationUpdate');
+                  notificationsComponent.dispatchEvent(event);
+                }
+              }
+            } catch (err) {
+              console.error('Error marking notification as read:', err);
+            }
           }
         });
       } catch (err) {
-        console.error('Notification processing error:', err);
-        toast('New notification received', {
-          position: "top-right",
-          type: "info"
-        });
+        console.error('Error processing notification:', err);
       }
     });
-  
-    socket.on('disconnect', () => {
-      console.log('Disconnected from WebSocket server');
+
+    // Add listener for order status updates
+    socket.on('orderStatusUpdate', (data) => {
+      console.log('Order status update received:', data);
+      const ordersComponent = document.querySelector('[data-component="orders"]');
+      if (ordersComponent) {
+        const event = new CustomEvent('orderStatusUpdate', { 
+          detail: { 
+            orderId: data.orderId,
+            status: data.status,
+            lastUpdated: data.lastUpdated
+          } 
+        });
+        ordersComponent.dispatchEvent(event);
+      }
     });
-  
+
     return () => {
-      socket.off('connect');
       socket.off('notification');
-      socket.off('disconnect');
+      socket.off('orderStatusUpdate');
     };
   }, []);
 
