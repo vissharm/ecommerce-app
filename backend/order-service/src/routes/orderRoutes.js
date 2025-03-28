@@ -18,12 +18,14 @@ producer.on('error', (err) => {
 
 router.post('/create', async (req, res) => {
   try {
-    const { userId, productId, quantity } = req.body;
+    const { userId, productId, quantity, orderDate } = req.body;
     const order = new Order({ 
       userId, 
       productId, 
       quantity, 
-      status: 'Pending' 
+      status: 'Pending',
+      orderDate: new Date(orderDate),
+      lastUpdated: new Date()
     });
     await order.save();
 
@@ -35,6 +37,8 @@ router.post('/create', async (req, res) => {
         productId: order.productId,
         quantity: order.quantity,
         status: order.status,
+        orderDate: order.orderDate,
+        lastUpdated: order.lastUpdated,
         _id: order._id
       })
     }];
@@ -43,7 +47,7 @@ router.post('/create', async (req, res) => {
       if (err) {
         console.error('Failed to produce Kafka message:', err);
       } else {
-        console.log('Order sent to Kafka:', data, JSON.stringify(payloads));
+        console.log('Order sent to Kafka:', data);
       }
     });
 

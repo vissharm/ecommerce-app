@@ -18,6 +18,7 @@ import {
   makeStyles
 } from '@material-ui/core';
 import AddIcon from '@material-ui/icons/Add';
+import { DateTimePicker } from '@material-ui/pickers';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -57,6 +58,7 @@ function Orders() {
   const [userId, setUserId] = useState('');
   const [productId, setProductId] = useState('');
   const [quantity, setQuantity] = useState('');
+  const [orderDate, setOrderDate] = useState(new Date());
 
   useEffect(() => {
     fetchOrders();
@@ -83,7 +85,13 @@ function Orders() {
 
   const handleCreateOrder = (e) => {
     e.preventDefault();
-    const newOrder = { userId, productId, quantity: parseInt(quantity, 10) };
+    const newOrder = { 
+      userId, 
+      productId, 
+      quantity: parseInt(quantity, 10),
+      orderDate: orderDate.toISOString(),
+      status: 'Pending'
+    };
 
     axios.post(`${process.env.REACT_APP_API_URL}/api/orders/create`, newOrder)
       .then(res => {
@@ -120,6 +128,8 @@ function Orders() {
               <TableCell>Product ID</TableCell>
               <TableCell align="right">Quantity</TableCell>
               <TableCell>Status</TableCell>
+              <TableCell>Order Date</TableCell>
+              <TableCell>Last Updated</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -130,6 +140,8 @@ function Orders() {
                 <TableCell>{order.productId}</TableCell>
                 <TableCell align="right">{order.quantity}</TableCell>
                 <TableCell>{order.status}</TableCell>
+                <TableCell>{new Date(order.orderDate).toLocaleString()}</TableCell>
+                <TableCell>{new Date(order.lastUpdated).toLocaleString()}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -173,6 +185,15 @@ function Orders() {
               size="small"
               required
               InputProps={{ inputProps: { min: 1 } }}
+            />
+            <DateTimePicker
+              label="Order Date"
+              inputVariant="outlined"
+              value={orderDate}
+              onChange={setOrderDate}
+              size="small"
+              className={classes.textField}
+              format="yyyy/MM/dd HH:mm"
             />
           </form>
         </DialogContent>

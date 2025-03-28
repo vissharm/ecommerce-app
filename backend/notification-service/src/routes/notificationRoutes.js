@@ -79,40 +79,45 @@ consumerGroup.on('ready', () => {
 
 consumerGroup.on('message', async (message) => {
   try {
-      console.log('Raw Kafka message received:', message);
-      console.log("Message value:", message.value);
-      
-      const orderData = JSON.parse(message.value);
-      console.log("Parsed order data:", orderData);
-      
-      // Create and save notification
-      const notification = new Notification({
-          userId: orderData.userId,
-          message: `New order created for product: ${orderData.productId}`,
-          read: false,
-          createdAt: new Date()
-      });
-      
-      await notification.save();
-      console.log('Notification saved successfully:', notification);
+    console.log('Raw Kafka message received:', message);
+    const orderData = JSON.parse(message.value);
+    
+    // Create and save notification
+    const notification = new Notification({
+      userId: orderData.userId,
+      message: `New order created for product: ${orderData.productId}`,
+      read: false,
+      createdAt: new Date(),
+      orderId: orderData._id,
+      orderDate: new Date(orderData.orderDate)
+    });
+    
+    await notification.save();
 
-      // Emit socket event
-      const io = getIo();
-      io.emit('notification', { 
-          type: 'order_created',
-          message: JSON.stringify({
-              orderId: orderData._id,
-              userId: orderData.userId,
-              productId: orderData.productId,
-              quantity: orderData.quantity,
-              status: orderData.status
-          })
-      });
-      console.log('Socket notification emitted successfully');
+    // Update order status to completed
+    await Order.findByIdAndUpdate(orderData._id, {
+      status: 'Completed',
+      lastUpdated: new Date()
+    });
 
+    // Emit socket event
+    const io = getIo();
+    io.emit('notification', { 
+      type: 'order_created',
+      message: JSON.stringify({
+        orderId: orderData._id,
+        userId: orderData.userId,
+        productId: orderData.productId,
+        quantity: orderData.quantity,
+        status: 'Completed',
+        orderDate: orderData.orderDate,
+        lastUpdated: new Date()
+      })
+    });
+
+    console.log('Notification saved and order updated successfully');
   } catch(err) {
-      console.error('Error processing Kafka message:', err);
-      console.error('Error stack:', err.stack);
+    console.error('Error processing Kafka message:', err);
   }
 });
 

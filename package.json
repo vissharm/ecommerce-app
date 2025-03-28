@@ -1,6 +1,12 @@
 {
+  "name": "microservices-setup",
+  "version": "1.0.0",
+  "description": "Setup script for microservices databases",
+  "scripts": {
+    "setup": "node setup.js"
+  },
   "dependencies": {
-    "dotenv": "^16.4.7",
-    "mongoose": "^8.13.0"
+    "mongoose": "^6.0.0",
+    "dotenv": "^16.0.0"
   }
 }
