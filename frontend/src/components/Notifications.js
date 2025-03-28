@@ -1,8 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Typography, List, ListItem, ListItemText, CircularProgress } from '@material-ui/core';
+import { 
+  Typography, 
+  Paper, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow,
+  CircularProgress,
+  Chip
+} from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
+
+const useStyles = makeStyles((theme) => ({
+  root: {
+    padding: theme.spacing(3)
+  },
+  table: {
+    minWidth: 650,
+  },
+  tableContainer: {
+    marginTop: theme.spacing(3),
+    borderRadius: theme.spacing(1)
+  },
+  readChip: {
+    backgroundColor: theme.palette.success.light,
+  },
+  unreadChip: {
+    backgroundColor: theme.palette.warning.light,
+  }
+}));
 
 function Notifications() {
+  const classes = useStyles();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -38,23 +70,42 @@ function Notifications() {
   }
 
   return (
-    <div>
+    <div className={classes.root}>
       <Typography variant="h4" gutterBottom>
         Notifications
       </Typography>
+      
       {notifications.length === 0 ? (
         <Typography>No notifications found</Typography>
       ) : (
-        <List>
-          {notifications.map(notification => (
-            <ListItem key={notification._id}>
-              <ListItemText 
-                primary={notification.message}
-                secondary={`Read: ${notification.read ? 'Yes' : 'No'}`}
-              />
-            </ListItem>
-          ))}
-        </List>
+        <TableContainer component={Paper} className={classes.tableContainer}>
+          <Table className={classes.table}>
+            <TableHead>
+              <TableRow>
+                <TableCell>Message</TableCell>
+                <TableCell align="center">Status</TableCell>
+                <TableCell align="right">Date</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {notifications.map((notification) => (
+                <TableRow key={notification._id}>
+                  <TableCell>{notification.message}</TableCell>
+                  <TableCell align="center">
+                    <Chip 
+                      label={notification.read ? "Read" : "Unread"}
+                      className={notification.read ? classes.readChip : classes.unreadChip}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell align="right">
+                    {new Date(notification.createdAt).toLocaleDateString()}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
     </div>
   );
