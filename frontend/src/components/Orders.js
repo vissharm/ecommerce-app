@@ -33,12 +33,21 @@ const useStyles = makeStyles((theme) => ({
   addButton: {
     marginBottom: theme.spacing(3)
   },
-  form: {
-    '& .MuiTextField-root': {
-      margin: theme.spacing(1),
-      width: '100%',
-    },
+  dialogContent: {
+    width: '400px', // Fixed width for dialog
+    padding: theme.spacing(2),
   },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(2), // Consistent spacing between fields
+  },
+  textField: {
+    width: '100%',
+  },
+  dialogActions: {
+    padding: theme.spacing(2),
+  }
 }));
 
 function Orders() {
@@ -64,18 +73,21 @@ function Orders() {
   };
 
   const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false);
+    // Reset form fields when closing
+    setUserId('');
+    setProductId('');
+    setQuantity('');
+  };
 
   const handleCreateOrder = (e) => {
     e.preventDefault();
-    const newOrder = { userId, productId, quantity };
+    const newOrder = { userId, productId, quantity: parseInt(quantity, 10) };
 
     axios.post(`${process.env.REACT_APP_API_URL}/api/orders/create`, newOrder)
       .then(res => {
         setOrders([...orders, res.data]);
-        setUserId('');
-        setProductId('');
-        setQuantity('');
         handleClose();
       })
       .catch(err => {
@@ -124,39 +136,58 @@ function Orders() {
         </Table>
       </TableContainer>
 
-      <Dialog open={open} onClose={handleClose}>
+      <Dialog 
+        open={open} 
+        onClose={handleClose}
+        maxWidth="xs" // Controls the maximum width of the dialog
+        fullWidth={false} // Prevents the dialog from taking full width
+      >
         <DialogTitle>Create New Order</DialogTitle>
-        <form onSubmit={handleCreateOrder} className={classes.form}>
-          <DialogContent>
+        <DialogContent className={classes.dialogContent}>
+          <form onSubmit={handleCreateOrder} className={classes.form}>
             <TextField
+              className={classes.textField}
               label="User ID"
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
+              variant="outlined"
+              size="small"
               required
             />
             <TextField
+              className={classes.textField}
               label="Product ID"
               value={productId}
               onChange={(e) => setProductId(e.target.value)}
+              variant="outlined"
+              size="small"
               required
             />
             <TextField
+              className={classes.textField}
               label="Quantity"
               type="number"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
+              variant="outlined"
+              size="small"
               required
+              InputProps={{ inputProps: { min: 1 } }}
             />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose} color="secondary">
-              Cancel
-            </Button>
-            <Button type="submit" color="primary" variant="contained">
-              Create Order
-            </Button>
-          </DialogActions>
-        </form>
+          </form>
+        </DialogContent>
+        <DialogActions className={classes.dialogActions}>
+          <Button onClick={handleClose} color="secondary">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleCreateOrder} 
+            color="primary" 
+            variant="contained"
+          >
+            Create Order
+          </Button>
+        </DialogActions>
       </Dialog>
     </div>
   );
