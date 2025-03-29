@@ -13,15 +13,50 @@ import {
 import { 
   Queue as QueueIcon,
   Notifications as NotificationsIcon,
-  Cloud as CloudIcon,  // Changed from API to Cloud
+  Cloud as CloudIcon,
   Code as CodeIcon,
   Web as WebIcon
 } from '@material-ui/icons';
+import { getAuthData } from '../utils/secureStorage';
 
 function Home() {
+  const { user } = getAuthData();
+
   return (
     <Container>
       <Box my={4}>
+        {user?.name ? (
+          // Show personalized welcome for logged-in users
+          <Typography 
+            variant="h2" 
+            gutterBottom 
+            style={{ 
+              fontWeight: 300,
+              background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              marginBottom: '2rem',
+              textAlign: 'center'
+            }}
+          >
+            Welcome, {user.name}!
+          </Typography>
+        ) : (
+          // Show generic welcome for non-logged-in users
+          <Typography 
+            variant="h2" 
+            gutterBottom 
+            style={{ 
+              fontWeight: 300,
+              color: '#2196F3',
+              marginBottom: '2rem',
+              textAlign: 'center'
+            }}
+          >
+            Welcome to E-commerce App
+          </Typography>
+        )}
+
         <Typography variant="h4" gutterBottom color="primary">
           E-commerce Microservices Architecture
         </Typography>

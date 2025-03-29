@@ -2,7 +2,7 @@ const express = require('express');
 const Order = require('../models/Order');
 const router = express.Router();
 const kafka = require('kafka-node');
-// const mongoose = require('mongoose');
+const auth = require('../../../shared/middleware/auth');
 
 // Kafka configuration
 const client = new kafka.KafkaClient({kafkaHost: process.env.KAFKA_BROKER});
@@ -16,17 +16,23 @@ producer.on('error', (err) => {
   console.error('Kafka Producer error:', err);
 });
 
-router.post('/create', async (req, res) => {
+// Create order - now requires auth
+router.post('/create', auth(), async (req, res) => {
   try {
-    const { userId, productId, quantity, orderDate } = req.body;
+    const { productId, quantity } = req.body;
+    
+    // Use the user ID from the authenticated token
+    const userId = req.user.id;
+    
     const order = new Order({ 
       userId, 
       productId, 
       quantity, 
       status: 'Pending',
-      orderDate: new Date(orderDate),
+      orderDate: new Date(),
       lastUpdated: new Date()
     });
+    
     await order.save();
 
     // Send to Kafka
@@ -58,9 +64,15 @@ router.post('/create', async (req, res) => {
   }
 });
 
-router.get('/orders', async (req, res) => {
-  const orders = await Order.find();
-  res.status(200).send(orders);
+// Get orders - now filtered by user ID from token
+router.get('/orders', auth(), async (req, res) => {
+  try {
+    const orders = await Order.find({ userId: req.user.id });
+    res.status(200).send(orders);
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.status(500).send({ error: 'Failed to fetch orders' });
+  }
 });
 
 module.exports = router;

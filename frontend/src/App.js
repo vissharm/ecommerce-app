@@ -1,30 +1,33 @@
 import React, {useEffect} from 'react';
 import { 
   BrowserRouter as Router,
-  Switch,
-  Route
+  Routes,
+  Route,
+  Navigate
 } from 'react-router-dom';
 import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import DateFnsUtils from '@date-io/date-fns';
 import axios from 'axios';
+import axiosInstance from './utils/axiosConfig';
 
 import { Container } from '@material-ui/core';
-import Navbar from './components/Navbar';
+import Navbar from './components/layout/Navbar';
 import Home from './components/Home';
-import Users from './components/Users';
+import UserProfile from './components/UserProfile';
 import Orders from './components/Orders';
 import Notifications from './components/Notifications';
 import Products from './components/Products';
+import Login from './components/auth/Login';
+import Register from './components/auth/Register';
+import Profile from './components/profile/Profile';
 
-import { ToastContainer, toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import socket from './socket';
+import socket from './socket';  // Import the shared socket instance
 
 function App() {
   useEffect(() => {
-    socket.on('connect', () => {
-      console.log('Connected to WebSocket server via API Gateway');
-    });
+    // const socket = io(process.env.REACT_APP_SOCKET_URL || window.location.origin);
 
     socket.on('notification', async (data) => {
       console.log('Notification received:', data);
@@ -79,16 +82,13 @@ function App() {
           onOpen: async () => {
             try {
               if (orderData.notificationId) {
-                await axios.put(
-                  `${process.env.REACT_APP_API_URL}/api/notifications/markAsRead/${orderData.notificationId}`
+                await axiosInstance.put(
+                  `/api/notifications/markAsRead/${orderData.notificationId}`
                 );
                 console.log('Notification marked as read:', orderData.notificationId);
                 
-                const notificationsComponent = document.querySelector('[data-component="notifications"]');
-                if (notificationsComponent) {
-                  const event = new CustomEvent('notificationUpdate');
-                  notificationsComponent.dispatchEvent(event);
-                }
+                // Dispatch event to update notifications list
+                window.dispatchEvent(new CustomEvent('notificationUpdate'));
               }
             } catch (err) {
               console.error('Error marking notification as read:', err);
@@ -127,14 +127,17 @@ function App() {
       <Router>
         <div className="App">
           <Navbar />
-          <Container>
-            <Switch>
-              <Route exact path="/" component={Home} />
-              <Route path="/users" component={Users} />
-              <Route path="/orders" component={Orders} />
-              <Route path="/notifications" component={Notifications} />
-              <Route path="/products" component={Products} />
-            </Switch>
+          <Container style={{ paddingTop: '2rem', paddingBottom: '2rem' }}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/dashboard" element={<Navigate to="/" replace />} />
+              <Route path="/profile" element={<UserProfile />} />
+              <Route path="/orders" element={<Orders />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+            </Routes>
           </Container>
           <ToastContainer
             position="top-right"

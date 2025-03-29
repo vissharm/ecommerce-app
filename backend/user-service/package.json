@@ -10,6 +10,10 @@
     "mongoose": "^5.11.15",
     "dotenv": "^8.2.0",
     "kafka-node": "^5.0.0",
-    "socket.io": "^4.0.0"
+    "socket.io": "^4.0.0",
+    "jsonwebtoken": "^8.5.1",
+    "bcryptjs": "^2.4.3"
   }
 }
+
+

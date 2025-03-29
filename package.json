@@ -1,12 +1,14 @@
 {
-  "name": "microservices-setup",
+  "name": "ecommerce-app",
   "version": "1.0.0",
-  "description": "Setup script for microservices databases",
-  "scripts": {
-    "setup": "node setup.js"
-  },
+  "workspaces": [
+    "backend/*",
+    "backend/shared"
+  ],
   "dependencies": {
-    "mongoose": "^6.0.0",
-    "dotenv": "^16.0.0"
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.0.0",
+    "mongoose": "^6.0.0"
   }
 }
+

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axiosConfig';
 import { 
   Typography, 
   Paper, 
@@ -15,11 +15,17 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
   makeStyles
 } from '@material-ui/core';
 import AddIcon from '@material-ui/icons/Add';
 import { DateTimePicker } from '@material-ui/pickers';
-import io from 'socket.io-client';
+import socket from '../socket';  // Import the shared socket instance
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -56,22 +62,47 @@ function Orders() {
   const classes = useStyles();
   const [orders, setOrders] = useState([]);
   const [open, setOpen] = useState(false);
-  const [userId, setUserId] = useState('');
-  const [productId, setProductId] = useState('');
+  const [productId, setProductId] = useState('');  // Removed userId state
   const [quantity, setQuantity] = useState('');
   const [orderDate, setOrderDate] = useState(new Date());
+  const [products, setProducts] = useState([]);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await axiosInstance.get('/api/products');
+      setProducts(response.data);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      if (error.response?.status === 401) {
+        // Token expired or invalid - will be handled by axiosInstance interceptor
+        return;
+      }
+      // Handle other errors
+    }
+  };
 
   const fetchOrders = async () => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/orders/orders`);
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user || !user.id) {
+        throw new Error('User not found');
+      }
+      
+      const response = await axiosInstance.get(`/api/orders/orders`);
       setOrders(response.data);
     } catch (error) {
       console.error('Error fetching orders:', error);
+      if (error.response?.status === 401) {
+        // Token expired or invalid - will be handled by axiosInstance interceptor
+        return;
+      }
+      // Handle other errors
     }
   };
 
   useEffect(() => {
     fetchOrders();
+    fetchProducts();
 
     // Listen for order status updates
     const handleOrderUpdate = (event) => {
@@ -93,7 +124,7 @@ function Orders() {
     }
 
     // Listen for socket.io events directly
-    const socket = io(process.env.REACT_APP_SOCKET_URL || window.location.origin);
+    // const socket = io(process.env.REACT_APP_SOCKET_URL || window.location.origin);
     
     socket.on('orderStatusUpdate', (data) => {
       console.log('Socket orderStatusUpdate received:', data);
@@ -111,6 +142,7 @@ function Orders() {
       try {
         const orderData = JSON.parse(data.message);
         if (orderData.status && orderData.orderId) {
+          // Update orders list
           setOrders(prevOrders => 
             prevOrders.map(order => 
               order._id === orderData.orderId 
@@ -118,9 +150,21 @@ function Orders() {
                 : order
             )
           );
+
+          // Show toast notification
+          const formattedDate = orderData.lastUpdated 
+            ? new Date(orderData.lastUpdated).toLocaleString()
+            : new Date().toLocaleString();
+
+          // Trigger notification update
+          const notificationsComponent = document.querySelector('[data-component="notifications"]');
+          if (notificationsComponent) {
+            notificationsComponent.dispatchEvent(new CustomEvent('notificationUpdate'));
+          }
         }
       } catch (err) {
         console.error('Error processing notification:', err);
+        toast.error('Error processing notification');
       }
     });
 
@@ -131,6 +175,7 @@ function Orders() {
       }
       socket.off('orderStatusUpdate');
       socket.off('notification');
+      socket.disconnect();
     };
   }, []);
 
@@ -138,7 +183,6 @@ function Orders() {
   const handleClose = () => {
     setOpen(false);
     // Reset form fields when closing
-    setUserId('');
     setProductId('');
     setQuantity('');
   };
@@ -146,14 +190,13 @@ function Orders() {
   const handleCreateOrder = (e) => {
     e.preventDefault();
     const newOrder = { 
-      userId, 
       productId, 
       quantity: parseInt(quantity, 10),
       orderDate: orderDate.toISOString(),
       status: 'Pending'
     };
 
-    axios.post(`${process.env.REACT_APP_API_URL}/api/orders/create`, newOrder)
+    axiosInstance.post('/api/orders/create', newOrder)
       .then(res => {
         setOrders([...orders, res.data]);
         handleClose();
@@ -184,7 +227,6 @@ function Orders() {
           <TableHead>
             <TableRow>
               <TableCell>Order ID</TableCell>
-              <TableCell>User ID</TableCell>
               <TableCell>Product ID</TableCell>
               <TableCell align="right">Quantity</TableCell>
               <TableCell>Status</TableCell>
@@ -196,7 +238,6 @@ function Orders() {
             {orders.map((order) => (
               <TableRow key={order._id}>
                 <TableCell>{order._id}</TableCell>
-                <TableCell>{order.userId}</TableCell>
                 <TableCell>{order.productId}</TableCell>
                 <TableCell align="right">{order.quantity}</TableCell>
                 <TableCell>{order.status}</TableCell>
@@ -217,24 +258,19 @@ function Orders() {
         <DialogTitle>Create New Order</DialogTitle>
         <DialogContent className={classes.dialogContent}>
           <form onSubmit={handleCreateOrder} className={classes.form}>
-            <TextField
-              className={classes.textField}
-              label="User ID"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              variant="outlined"
-              size="small"
-              required
-            />
-            <TextField
-              className={classes.textField}
-              label="Product ID"
-              value={productId}
-              onChange={(e) => setProductId(e.target.value)}
-              variant="outlined"
-              size="small"
-              required
-            />
+            <FormControl fullWidth margin="dense">
+              <InputLabel>Product</InputLabel>
+              <Select
+                value={productId}
+                onChange={(e) => setProductId(e.target.value)}
+              >
+                {products.map((product) => (
+                  <MenuItem key={product._id} value={product._id}>
+                    {product.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <TextField
               className={classes.textField}
               label="Quantity"

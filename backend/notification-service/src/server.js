@@ -5,22 +5,19 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const { KafkaClient, Consumer, Producer } = require('kafka-node');
 const http = require('http');
 const { initSocket } = require('./socket'); // Import initSocket function
-// const cors = require('cors'); // Import CORS middleware
+const cors = require('cors'); // Import CORS middleware
 
 dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
 
-// // CORS configuration
-// const corsOptions = {
-//   origin: 'http://localhost:3000', // Your frontend URL
-//   methods: ['GET', 'POST'],
-//   allowedHeaders: ['Content-Type'],
-//   credentials: true,
-// };
-
-// app.use(cors(corsOptions)); // Use CORS middleware with options
+// CORS configuration
+app.use(cors({
+  origin: "http://localhost:3000",
+  methods: ["GET", "POST"],
+  credentials: true
+}));
 
 app.use(express.json());
 app.use('/api/notifications', notificationRoutes);

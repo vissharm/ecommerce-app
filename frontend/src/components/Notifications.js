@@ -1,29 +1,30 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import axios from 'axios';
-import { 
-  Typography, 
-  Paper, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
   TableRow,
+  Paper,
+  Chip,
   CircularProgress,
-  Chip
+  makeStyles
 } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import axiosInstance from '../utils/axiosConfig';
+import { useNavigate } from 'react-router-dom';
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    padding: theme.spacing(3)
+    width: '100%',
+    marginTop: theme.spacing(3),
   },
   table: {
     minWidth: 650,
   },
   tableContainer: {
-    marginTop: theme.spacing(3),
-    borderRadius: theme.spacing(1)
+    marginTop: theme.spacing(2),
   },
   readChip: {
     backgroundColor: theme.palette.success.light,
@@ -35,6 +36,7 @@ const useStyles = makeStyles((theme) => ({
 
 function Notifications() {
   const classes = useStyles();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -42,7 +44,8 @@ function Notifications() {
   const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/notifications/notifications`);
+      const res = await axiosInstance.get('/api/notifications/notifications');
+      
       const sortedNotifications = Array.isArray(res.data) 
         ? res.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         : [];
@@ -50,16 +53,19 @@ function Notifications() {
       setError(null);
     } catch (err) {
       console.error('Error fetching notifications:', err);
-      setError('Failed to load notifications');
+      if (err.response?.status === 401) {
+        navigate('/login');
+      } else {
+        setError('Failed to load notifications');
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     fetchNotifications();
 
-    // Add event listener for notification updates
     const handleUpdate = () => {
       console.log('Notification update event received');
       fetchNotifications();
@@ -71,6 +77,27 @@ function Notifications() {
       window.removeEventListener('notificationUpdate', handleUpdate);
     };
   }, [fetchNotifications]);
+
+  const handleMarkAsRead = async (notificationId) => {
+    try {
+      await axiosInstance.put(
+        `/api/notifications/markAsRead/${notificationId}`
+      );
+
+      setNotifications(prevNotifications =>
+        prevNotifications.map(notification =>
+          notification._id === notificationId
+            ? { ...notification, read: true }
+            : notification
+        )
+      );
+    } catch (err) {
+      console.error('Error marking notification as read:', err);
+      if (err.response?.status === 401) {
+        navigate('/login');
+      }
+    }
+  };
 
   if (loading) {
     return (
@@ -104,7 +131,11 @@ function Notifications() {
             </TableHead>
             <TableBody>
               {notifications.map((notification) => (
-                <TableRow key={notification._id}>
+                <TableRow 
+                  key={notification._id}
+                  onClick={() => !notification.read && handleMarkAsRead(notification._id)}
+                  style={{ cursor: notification.read ? 'default' : 'pointer' }}
+                >
                   <TableCell>{notification.message}</TableCell>
                   <TableCell align="center">
                     <Chip 

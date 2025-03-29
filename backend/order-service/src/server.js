@@ -1,11 +1,15 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const path = require('path');
 const orderRoutes = require('./routes/orderRoutes');
 const { KafkaClient, Consumer, Producer } = require('kafka-node');
 const http = require('http');
 const { Server } = require('socket.io');
 
+// Load shared environment variables first
+dotenv.config({ path: path.join(__dirname, '../../shared/.env') });
+// Load service-specific environment variables
 dotenv.config();
 
 const app = express();
