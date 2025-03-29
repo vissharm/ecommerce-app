@@ -1,0 +1,10 @@
+{
+  "name": "ecommerce-app-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "mongoose": "^5.11.15",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^8.2.0"
+  }
+}

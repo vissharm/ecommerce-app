@@ -1,0 +1,35 @@
+[submodule "backend/user-service"]
+	path = backend/user-service
+	url = https://github.com/vissharm/ecommerce-app-user-service.git
+	branch = master
+
+[submodule "backend/product-service"]
+	path = backend/product-service
+	url = https://github.com/vissharm/ecommerce-app-product-service.git
+	branch = master
+
+[submodule "backend/order-service"]
+	path = backend/order-service
+	url = https://github.com/vissharm/ecommerce-app-order-service.git
+	branch = master
+
+[submodule "backend/notification-service"]
+	path = backend/notification-service
+	url = https://github.com/vissharm/ecommerce-app-notification-service.git
+	branch = master
+
+[submodule "backend/shared"]
+	path = backend/shared
+	url = https://github.com/vissharm/ecommerce-app-shared.git
+	branch = master
+
+[submodule "frontend"]
+	path = frontend
+	url = https://github.com/vissharm/ecommerce-app-frontend.git
+	branch = master
+
+[submodule "api-gateway"]
+	path = api-gateway
+	url = https://github.com/vissharm/ecommerce-app-api-gateway.git
+	branch = master
+
