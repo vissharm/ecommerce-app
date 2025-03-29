@@ -1,2 +1,24 @@
-node_modules
-frontend/build
+# Dependencies
+node_modules/
+
+# Production environment files
+.env.production
+.env.staging
+
+# Build outputs
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,14 +1,20 @@
 {
   "name": "ecommerce-app",
   "version": "1.0.0",
+  "private": true,
   "workspaces": [
     "backend/*",
-    "backend/shared"
+    "api-gateway",
+    "frontend"
   ],
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "dotenv": "^16.0.0",
-    "mongoose": "^6.0.0"
+  "scripts": {
+    "setup": "powershell ./scripts/setup.ps1",
+    "start": "powershell ./scripts/start-services.ps1",
+    "start:docker": "docker-compose up",
+    "test": "npm run test --workspaces",
+    "build": "npm run build --workspaces",
+    "update-submodules": "git submodule update --remote --merge"
   }
 }
+
 

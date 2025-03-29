@@ -1,5 +1,24 @@
 # E-Commerce Microservices Application
 
+## Project Structure
+```
+ecommerce-app/
+├── backend/
+│   ├── user-service/        # Git submodule
+│   ├── product-service/     # Git submodule
+│   ├── order-service/       # Git submodule
+│   ├── notification-service/# Git submodule
+│   └── shared/             # Git submodule
+├── frontend/               # Git submodule
+├── api-gateway/           # Git submodule
+├── scripts/
+│   ├── setup.ps1
+│   ├── start-services.ps1
+│   └── setup.js
+├── docker-compose.yml
+└── package.json
+```
+
 ## Prerequisites
 - Node.js (v14 or higher)
 - MongoDB (v4.4 or higher)
@@ -9,56 +28,67 @@
 
 ## Initial Setup
 
-1. **Install Dependencies and Setup Database**
-   ```bash
-   # Install dependencies and run database setup
-   npm install
-   npm run setup
-   ```
-   This will:
-   - Install all required dependencies
-   - Create necessary database schemas
-   - Initialize default data including:
-     - Users (john@example.com, jane@example.com with password: password123)
-     - Products (Laptop, Smartphone)
-     - Sample orders and notifications
+1. Clone the repository with submodules:
+```bash
+git clone --recursive https://github.com/your-org/ecommerce-app.git
+cd ecommerce-app
+```
 
-2. **Setup Kafka and ZooKeeper**
+2. Run setup script:
+```bash
+npm run setup
+```
 
-   Option 1 - Using Docker:
-   ```bash
-   # Start Kafka and ZooKeeper using Docker Compose
-   docker-compose up -d
-   ```
+## Development
 
-   Option 2 - Manual Setup:
-   - Download and extract Apache ZooKeeper:
-     - Place in `C:\apache-zookeeper-3.7.2-bin`
-     - Configure `zoo.cfg` in the `conf` directory
-   
-   - Download and extract Apache Kafka:
-     - Place in `C:\kafka_2.13-3.6.1`
-     - Configure `server.properties` in the `config` directory
+### Working with Submodules
+
+#### Clone with submodules:
+```bash
+# Initial clone
+git clone --recursive https://github.com/your-org/ecommerce-app.git
+
+# Or if already cloned without submodules
+git submodule init
+git submodule update
+```
+
+#### Update all submodules to latest:
+```bash
+npm run update-submodules
+```
+
+#### Work on a specific service:
+```bash
+# Example for user-service
+cd backend/user-service
+git checkout main
+# Make changes
+git commit -m "Your changes"
+git push
+```
+
+#### Add new changes from submodules to main repo:
+```bash
+# After submodule changes are pushed
+git add backend/user-service
+git commit -m "Update user-service submodule"
+git push
+```
 
 ## Running the Application
 
-### Start All Services
-Run the provided batch script to start all services in separate terminal windows:
+### Local Development
 ```bash
-start-services.bat
+npm start
 ```
 
-This script will start the following services in order:
-1. ZooKeeper (Port: 2181)
-2. Kafka (Port: 9092)
-3. Order Service (Port: 3002)
-4. Product Service (Port: 3004)
-5. User Service (Port: 3001)
-6. Notification Service (Port: 3003)
-7. Frontend Application
-8. API Gateway
+### Using Docker
+```bash
+npm run start:docker
+```
 
-### Service URLs
+## Service URLs
 - Frontend: http://localhost:3000
 - API Gateway: http://localhost:8080
 - User Service: http://localhost:3001
