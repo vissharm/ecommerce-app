@@ -18,24 +18,12 @@ import {
   makeStyles
 } from '@material-ui/core';
 import AddIcon from '@material-ui/icons/Add';
-
-const useStyles = makeStyles((theme) => ({
-  root: {
-    width: '100%',
-    marginTop: theme.spacing(3),
-    overflowX: 'auto',
-  },
-  table: {
-    minWidth: 650,
-  },
-  addButton: {
-    marginBottom: theme.spacing(2),
-  },
-}));
+import { useSharedStyles } from '../styles/shared';
 
 function Products() {
-  const classes = useStyles();
+  const sharedClasses = useSharedStyles();
   const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [open, setOpen] = useState(false);
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -45,20 +33,29 @@ function Products() {
   });
 
   useEffect(() => {
-    fetchProducts();
+    // Fetch both products and orders
+    const fetchData = async () => {
+      try {
+        const [productsRes, ordersRes] = await Promise.all([
+          axiosInstance.get('/api/products'),
+          axiosInstance.get('/api/orders/orders')
+        ]);
+        setProducts(productsRes.data);
+        setOrders(ordersRes.data);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+    
+    fetchData();
   }, []);
 
-  const fetchProducts = async () => {
-    try {
-      const response = await axiosInstance.get('/api/products');
-      setProducts(response.data);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      if (error.response?.status === 401) {
-        // Token expired or invalid - handled by axiosInstance interceptor
-        return;
-      }
-    }
+  // Calculate remaining stock for each product
+  const calculateRemainingStock = (productId, totalStock) => {
+    const orderedQuantity = orders
+      .filter(order => order.productId === productId && order.status !== 'Cancelled')
+      .reduce((sum, order) => sum + order.quantity, 0);
+    return totalStock - orderedQuantity;
   };
 
   const handleOpen = () => setOpen(true);
@@ -87,7 +84,7 @@ function Products() {
 
   return (
     <div>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h4" gutterBottom color="primary">
         Products
       </Typography>
       <Button
@@ -95,29 +92,48 @@ function Products() {
         color="primary"
         startIcon={<AddIcon />}
         onClick={handleOpen}
-        className={classes.addButton}
+        className={sharedClasses.addButton}
       >
         Add Product
       </Button>
-      <TableContainer component={Paper}>
-        <Table className={classes.table}>
+      <TableContainer component={Paper} className={sharedClasses.tableContainer}>
+        <Table className={sharedClasses.table}>
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
               <TableCell>Description</TableCell>
-              <TableCell>Price</TableCell>
-              <TableCell>Stock</TableCell>
+              <TableCell align="right">Price</TableCell>
+              <TableCell align="right">Total Stock</TableCell>
+              <TableCell align="right">Remaining Stock</TableCell>
+              <TableCell align="right">Orders Count</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {products.map((product) => (
-              <TableRow key={product._id}>
-                <TableCell>{product.name}</TableCell>
-                <TableCell>{product.description}</TableCell>
-                <TableCell>${product.price}</TableCell>
-                <TableCell>{product.stock}</TableCell>
-              </TableRow>
-            ))}
+            {products.map((product) => {
+              const remainingStock = calculateRemainingStock(product._id, product.stock);
+              const orderCount = orders.filter(
+                order => order.productId === product._id && order.status !== 'Cancelled'
+              ).length;
+              
+              return (
+                <TableRow key={product._id}>
+                  <TableCell>{product.name}</TableCell>
+                  <TableCell>{product.description}</TableCell>
+                  <TableCell align="right">${product.price}</TableCell>
+                  <TableCell align="right">{product.stock}</TableCell>
+                  <TableCell 
+                    align="right"
+                    style={{ 
+                      color: remainingStock < 10 ? 'red' : 'inherit',
+                      fontWeight: remainingStock < 10 ? 'bold' : 'normal'
+                    }}
+                  >
+                    {remainingStock}
+                  </TableCell>
+                  <TableCell align="right">{orderCount}</TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>

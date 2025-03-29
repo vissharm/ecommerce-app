@@ -26,40 +26,10 @@ import { DateTimePicker } from '@material-ui/pickers';
 import socket from '../socket';  // Import the shared socket instance
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
-const useStyles = makeStyles((theme) => ({
-  root: {
-    padding: theme.spacing(3)
-  },
-  table: {
-    minWidth: 650,
-  },
-  tableContainer: {
-    marginTop: theme.spacing(3),
-    borderRadius: theme.spacing(1)
-  },
-  addButton: {
-    marginBottom: theme.spacing(3)
-  },
-  dialogContent: {
-    width: '400px', // Fixed width for dialog
-    padding: theme.spacing(2),
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(2), // Consistent spacing between fields
-  },
-  textField: {
-    width: '100%',
-  },
-  dialogActions: {
-    padding: theme.spacing(2),
-  }
-}));
+import { useSharedStyles } from '../styles/shared';
 
 function Orders() {
-  const classes = useStyles();
+  const sharedClasses = useSharedStyles();
   const [orders, setOrders] = useState([]);
   const [open, setOpen] = useState(false);
   const [productId, setProductId] = useState('');  // Removed userId state
@@ -208,7 +178,7 @@ function Orders() {
 
   return (
     <div data-component="orders">
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h4" gutterBottom color="primary">
         Orders
       </Typography>
 
@@ -217,34 +187,39 @@ function Orders() {
         color="primary"
         startIcon={<AddIcon />}
         onClick={handleOpen}
-        className={classes.addButton}
+        className={sharedClasses.addButton}
       >
         Add New Order
       </Button>
 
-      <TableContainer component={Paper} className={classes.tableContainer}>
-        <Table className={classes.table}>
+      <TableContainer component={Paper} className={sharedClasses.tableContainer}>
+        <Table className={sharedClasses.table}>
           <TableHead>
             <TableRow>
               <TableCell>Order ID</TableCell>
-              <TableCell>Product ID</TableCell>
+              <TableCell>Product Name</TableCell>
               <TableCell align="right">Quantity</TableCell>
+              <TableCell align="right">Available Stock</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Order Date</TableCell>
               <TableCell>Last Updated</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {orders.map((order) => (
-              <TableRow key={order._id}>
-                <TableCell>{order._id}</TableCell>
-                <TableCell>{order.productId}</TableCell>
-                <TableCell align="right">{order.quantity}</TableCell>
-                <TableCell>{order.status}</TableCell>
-                <TableCell>{new Date(order.orderDate).toLocaleString()}</TableCell>
-                <TableCell>{new Date(order.lastUpdated).toLocaleString()}</TableCell>
-              </TableRow>
-            ))}
+            {orders.map((order) => {
+              const product = products.find(p => p._id === order.productId);
+              return (
+                <TableRow key={order._id}>
+                  <TableCell>{order._id}</TableCell>
+                  <TableCell>{product ? product.name : order.productId}</TableCell>
+                  <TableCell align="right">{order.quantity}</TableCell>
+                  <TableCell align="right">{product ? product.stock : 'N/A'}</TableCell>
+                  <TableCell>{order.status}</TableCell>
+                  <TableCell>{new Date(order.orderDate).toLocaleString()}</TableCell>
+                  <TableCell>{new Date(order.lastUpdated).toLocaleString()}</TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>
@@ -256,8 +231,8 @@ function Orders() {
         fullWidth={false} // Prevents the dialog from taking full width
       >
         <DialogTitle>Create New Order</DialogTitle>
-        <DialogContent className={classes.dialogContent}>
-          <form onSubmit={handleCreateOrder} className={classes.form}>
+        <DialogContent className={sharedClasses.dialogContent}>
+          <form onSubmit={handleCreateOrder} className={sharedClasses.form}>
             <FormControl fullWidth margin="dense">
               <InputLabel>Product</InputLabel>
               <Select
@@ -272,7 +247,7 @@ function Orders() {
               </Select>
             </FormControl>
             <TextField
-              className={classes.textField}
+              className={sharedClasses.textField}
               label="Quantity"
               type="number"
               value={quantity}
@@ -288,12 +263,12 @@ function Orders() {
               value={orderDate}
               onChange={setOrderDate}
               size="small"
-              className={classes.textField}
+              className={sharedClasses.textField}
               format="yyyy/MM/dd HH:mm"
             />
           </form>
         </DialogContent>
-        <DialogActions className={classes.dialogActions}>
+        <DialogActions className={sharedClasses.dialogActions}>
           <Button onClick={handleClose} color="secondary">
             Cancel
           </Button>

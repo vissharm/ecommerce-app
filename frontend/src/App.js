@@ -34,50 +34,17 @@ function App() {
       try {
         const orderData = JSON.parse(data.message);
         
-        // Update orders list if Orders component is open
-        if (window.location.pathname === '/orders') {
-          const ordersComponent = document.querySelector('[data-component="orders"]');
-          if (ordersComponent) {
-            const event = new CustomEvent('orderStatusUpdate', { 
-              detail: { 
-                orderId: orderData.orderId,
-                status: orderData.status,
-                lastUpdated: orderData.lastUpdated
-              } 
-            });
-            ordersComponent.dispatchEvent(event);
-          }
-        }
-
-        // Show toast notification
+        // Show toast notification without marking as read
         const formattedDate = orderData.lastUpdated 
           ? new Date(orderData.lastUpdated).toLocaleString()
           : new Date().toLocaleString();
 
-        const toastMessage = (
-          <div>
-            <strong>Order Status Update</strong>
-            <br />
-            <span>Order ID: {orderData.orderId}</span>
-            <br />
-            <span>Status: {orderData.status}</span>
-            <br />
-            <span>Last Updated: {formattedDate}</span>
-          </div>
-        );
-
-        toast(toastMessage, {
-          position: "top-right",
+        toast.success(`Order ${orderData.orderId} status updated to ${orderData.status}`, {
+          position: "top-center",
           autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          style: {
-            background: '#f5f5f5',
-            color: '#333',
-            borderLeft: '4px solid #4caf50'
+          onClick: () => {
+            // Optionally navigate to orders page on click
+            window.location.href = '/orders';
           },
           onOpen: async () => {
             try {
@@ -95,6 +62,21 @@ function App() {
             }
           }
         });
+
+        // Update orders list if needed
+        if (window.location.pathname === '/orders') {
+          const ordersComponent = document.querySelector('[data-component="orders"]');
+          if (ordersComponent) {
+            const event = new CustomEvent('orderStatusUpdate', { 
+              detail: { 
+                orderId: orderData.orderId,
+                status: orderData.status,
+                lastUpdated: orderData.lastUpdated
+              } 
+            });
+            ordersComponent.dispatchEvent(event);
+          }
+        }
       } catch (err) {
         console.error('Error processing notification:', err);
       }

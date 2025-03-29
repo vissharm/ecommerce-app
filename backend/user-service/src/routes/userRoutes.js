@@ -139,12 +139,17 @@ router.get('/profile', auth(), async (req, res) => {
 // Update user profile
 router.put('/profile', auth(), async (req, res) => {
   try {
-    const { email, name } = req.body; // Only allow email and name updates
+    const { name, email } = req.body; // Changed to expect name and email
     
     // Find user and update
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update name if provided
+    if (name) {
+      user.name = name;
     }
 
     // If email is being changed, check if new email already exists
@@ -156,15 +161,14 @@ router.put('/profile', auth(), async (req, res) => {
       user.email = email;
     }
 
-    // Update name if provided
-    if (name) user.name = name;
-
     await user.save();
 
     // Send response with updated user data
     res.json({
       name: user.name,
-      email: user.email
+      email: user.email,
+      contact: user.contact,
+      dob: user.dob
     });
 
   } catch (error) {
