@@ -1,94 +1,313 @@
 # E-Commerce Microservices Application
 
+## Technologies Stack
+
+### Backend
+- **Node.js** - Runtime environment
+- **Express.js** - Web framework
+- **MongoDB** - Primary database
+- **Kafka** - Message broker for event-driven architecture
+- **Redis** - Caching layer
+- **JWT** - Authentication and authorization
+- **Socket.IO** - Real-time notifications
+
+### Frontend
+- **React.js** - UI library
+- **Redux** - State management
+- **Material-UI** - Component library
+- **Axios** - HTTP client
+
+### DevOps & Infrastructure
+- **Docker** - Containerization
+- **Kubernetes** - Container orchestration
+- **Nginx** - API Gateway & reverse proxy
+- **Jenkins** - CI/CD pipeline
+- **ELK Stack** - Logging (Elasticsearch, Logstash, Kibana)
+- **Prometheus & Grafana** - Monitoring
+
 ## Project Structure
 ```
 ecommerce-app/
+├── api-gateway/                 # API Gateway service
+│   ├── src/
+│   ├── Dockerfile
+│   └── package.json
+│
 ├── backend/
-│   ├── user-service/        # Git submodule
-│   ├── product-service/     # Git submodule
-│   ├── order-service/       # Git submodule
-│   ├── notification-service/# Git submodule
-│   └── shared/             # Git submodule
-├── frontend/               # Git submodule
-├── api-gateway/           # Git submodule
-├── scripts/
+│   ├── user-service/           # User management service
+│   │   ├── src/
+│   │   ├── tests/
+│   │   ├── Dockerfile
+│   │   └── package.json
+│   │
+│   ├── product-service/        # Product management service
+│   │   ├── src/
+│   │   ├── tests/
+│   │   ├── Dockerfile
+│   │   └── package.json
+│   │
+│   ├── order-service/          # Order management service
+│   │   ├── src/
+│   │   ├── tests/
+│   │   ├── Dockerfile
+│   │   └── package.json
+│   │
+│   └── notification-service/    # Notification handling service
+│       ├── src/
+│       ├── tests/
+│       ├── Dockerfile
+│       └── package.json
+│
+├── frontend/                    # React frontend application
+│   ├── public/
+│   ├── src/
+│   ├── Dockerfile
+│   └── package.json
+│
+├── shared-lib/                  # Shared utilities and models
+│   ├── src/
+│   └── package.json
+│
+├── k8s/                        # Kubernetes manifests
+│   ├── api-gateway.yaml
+│   ├── user-service.yaml
+│   ├── product-service.yaml
+│   ├── order-service.yaml
+│   ├── notification-service.yaml
+│   ├── mongodb.yaml
+│   ├── kafka.yaml
+│   ├── redis.yaml
+│   └── configmap.yaml
+│
+├── scripts/                    # Deployment and utility scripts
 │   ├── setup.ps1
-│   ├── start-services.ps1
-│   └── setup.js
-├── docker-compose.yml
-└── package.json
+│   ├── k8s-deploy.ps1
+│   └── start-services.bat
+│
+├── docker-compose.yml          # Docker compose configuration
+├── docker-compose.dev.yml      # Development docker compose
+├── package.json
+└── README.md
 ```
 
-## Prerequisites
-- Node.js (v14 or higher)
-- MongoDB (v4.4 or higher)
-- Apache Kafka (v2.13-2.6.0 or higher)
-- Apache ZooKeeper (v3.4.6 or higher)
-- Windows Terminal (for running services)
+## Service Details
 
-## Initial Setup
+### API Gateway
+- Route management
+- Request validation
+- Authentication & Authorization
+- Rate limiting
+- Load balancing
 
-1. Clone the repository with submodules:
+### User Service
+- User management
+- Authentication
+- Profile management
+- Role-based access control
+
+### Product Service
+- Product catalog management
+- Inventory management
+- Product search & filtering
+- Category management
+
+### Order Service
+- Order processing
+- Payment integration
+- Order status management
+- Shopping cart management
+
+### Notification Service
+- Email notifications
+- Push notifications
+- Real-time updates
+- SMS integration
+
+## Data Flow
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant AG as API Gateway
+    participant US as User Service
+    participant PS as Product Service
+    participant OS as Order Service
+    participant NS as Notification Service
+    participant K as Kafka
+    participant DB as MongoDB
+
+    C->>AG: Request
+    AG->>US: Authenticate
+    US-->>AG: Token
+    AG->>PS: Get Product
+    PS-->>AG: Product Details
+    AG->>OS: Create Order
+    OS->>DB: Save Order
+    OS->>K: Publish Order Event
+    K->>NS: Consume Order Event
+    NS->>C: Send Notification
+```
+
+## System Architecture
+```mermaid
+graph TD
+    Client[Client] --> AG[API Gateway]
+    AG --> US[User Service]
+    AG --> PS[Product Service]
+    AG --> OS[Order Service]
+    AG --> NS[Notification Service]
+    
+    US --> DB[(MongoDB)]
+    PS --> DB
+    OS --> DB
+    NS --> DB
+    
+    OS --> KF[Kafka]
+    NS --> KF
+    
+    KF --> ZK[Zookeeper]
+```
+
+## Repository Setup
+
+1. Clone the main repository:
 ```bash
-git clone --recursive https://github.com/your-org/ecommerce-app.git
+git clone https://github.com/your-org/ecommerce-app.git
 cd ecommerce-app
 ```
 
-2. Run setup script:
+2. Initialize and update submodules:
 ```bash
+# Initialize submodules
+git submodule init
+
+# Update submodules
+git submodule update --init --recursive
+
+# Pull latest changes for all submodules
+git submodule update --remote --merge
+
+# Check submodule status
+git submodule status
+
+# Add a new submodule
+git submodule add -b main [repository-url] [path]
+
+# Remove a submodule
+git submodule deinit [path]
+git rm [path]
+```
+
+## Deployment Options
+
+### 1. Local Development (Without Containers)
+
+1. Install dependencies and setup:
+```bash
+# Run the setup script
+.\scripts\setup.ps1
+
+# Or use npm command
 npm run setup
 ```
 
-## Development
-
-### Working with Submodules
-
-#### Clone with submodules:
+2. Start all services:
 ```bash
-# Initial clone
-git clone --recursive https://github.com/your-org/ecommerce-app.git
-
-# Or if already cloned without submodules
-git submodule init
-git submodule update
+# Using start-services.bat
+.\start-services.bat
 ```
 
-#### Update all submodules to latest:
+Key points for start-services.bat:
+- Ensures Zookeeper and Kafka are running first
+- Opens separate terminal windows for each service
+- Links shared library automatically
+- Builds and starts frontend application
+
+### 2. Docker Compose Deployment
+
+Key commands:
 ```bash
-npm run update-submodules
+# Build and start all services
+docker-compose up --build -d
+
+# View logs
+docker-compose logs -f
+
+# View logs for specific service
+docker-compose logs -f [service-name]
+
+# Stop all services
+docker-compose down
+
+# Stop and remove volumes
+docker-compose down -v
+
+# Check service status
+docker-compose ps
+
+# Restart specific service
+docker-compose restart [service-name]
 ```
 
-#### Work on a specific service:
+### 3. Kubernetes Deployment
+
+1. Check cluster status:
 ```bash
-# Example for user-service
-cd backend/user-service
-git checkout main
-# Make changes
-git commit -m "Your changes"
-git push
+# View all pods in ecommerce namespace
+kubectl get pods -n ecommerce
+
+# View all services
+kubectl get svc -n ecommerce
+
+# View all deployments
+kubectl get deployments -n ecommerce
 ```
 
-#### Add new changes from submodules to main repo:
+2. Pod management:
 ```bash
-# After submodule changes are pushed
-git add backend/user-service
-git commit -m "Update user-service submodule"
-git push
+# Get pod logs
+kubectl logs [pod-name] -n ecommerce
+
+# Get pod details
+kubectl describe pod [pod-name] -n ecommerce
+
+# Execute command in pod
+kubectl exec -it [pod-name] -n ecommerce -- /bin/sh
+
+# Delete pod (will recreate)
+kubectl delete pod [pod-name] -n ecommerce
 ```
 
-## Running the Application
-
-### Local Development
+3. Deployment commands:
 ```bash
-npm start
+# Deploy all services
+kubectl apply -f k8s/
+
+# Deploy specific service
+kubectl apply -f k8s/[service-name].yaml
+
+# Scale deployment
+kubectl scale deployment [deployment-name] --replicas=3 -n ecommerce
+
+# Rollout restart
+kubectl rollout restart deployment [deployment-name] -n ecommerce
 ```
 
-### Using Docker
+4. Debugging:
 ```bash
-npm run start:docker
+# Check pod events
+kubectl get events -n ecommerce --sort-by='.lastTimestamp'
+
+# Check init container logs
+kubectl logs [pod-name] -c [init-container-name] -n ecommerce
+
+# Port forward service
+kubectl port-forward service/[service-name] [local-port]:[service-port] -n ecommerce
 ```
 
 ## Service URLs
+
+Local/Docker:
 - Frontend: http://localhost:3000
 - API Gateway: http://localhost:8080
 - User Service: http://localhost:3001
@@ -96,65 +315,48 @@ npm run start:docker
 - Notification Service: http://localhost:3003
 - Product Service: http://localhost:3004
 
-### Microservices Architecture
+Kubernetes:
+```bash
+# Get API Gateway URL
+minikube service api-gateway -n ecommerce --url
 ```
-┌─────────────┐     ┌─────────────┐
-│   Frontend  │ ←── │ API Gateway │
-└─────────────┘     └─────────────┘
-                          ↓
-┌────────────────────────────────────────┐
-│              Kafka Bus                 │
-└────────────────────────────────────────┘
-     ↓            ↓           ↓          ↓
-┌─────────┐  ┌─────────┐ ┌─────────┐ ┌─────────┐
-│  User   │  │  Order  │ │ Product │ │ Notif.  │
-│ Service │  │ Service │ │ Service │ │ Service │
-└─────────┘  └─────────┘ └─────────┘ └─────────┘
-     ↓            ↓           ↓          ↓
-┌────────────────────────────────────────┐
-│              MongoDB                   │
-└────────────────────────────────────────┘
-```
-
-### Default Data
-- **Users**:
-  - Email: john@example.com, Password: password123
-  - Email: jane@example.com, Password: password123
-
-- **Products**:
-  - Laptop ($999.99)
-  - Smartphone ($699.99)
 
 ## Troubleshooting
 
-1. **Kafka Connection Issues**
-   - Ensure ZooKeeper is running before starting Kafka
-   - Verify Kafka broker is running on localhost:9092
-   - Check Kafka logs for connection errors
-
-2. **MongoDB Connection Issues**
-   - Verify MongoDB is running on localhost:27017
-   - Check if the service can connect to its respective database
-
-3. **Service Start-up Issues**
-   - Ensure all required ports are available
-   - Check if all dependencies are installed correctly
-   - Verify environment variables in .env files
-
-## Additional Commands
-
+### Docker Issues
 ```bash
-# Stop Docker containers (if using Docker)
-docker-compose down
-
-# View Docker container logs
-docker-compose logs -f
-
-# Restart individual services
-cd backend/<service-name>
-npm run start
-
-# Clean installation
-npm run clean  # Removes node_modules and package-lock.json
-npm install    # Fresh installation
+# Reset Docker environment
+docker system prune -af --volumes
+docker-compose down -v
+docker-compose up --build -d
 ```
+
+### Kubernetes Issues
+```bash
+# Reset Minikube
+minikube delete
+minikube start
+kubectl apply -f k8s/
+
+# Check service connectivity
+kubectl run -it --rm debug --image=busybox -n ecommerce -- sh
+# Then use wget or nc to test services
+```
+
+### Submodule Issues
+```bash
+# Reset submodules
+git submodule deinit -f .
+git submodule update --init --recursive
+```
+
+## Environment Variables
+Key environment variables are stored in:
+- `.env` for local development
+- `docker-compose.yml` for Docker deployment
+- `k8s/configmap.yaml` for Kubernetes deployment
+
+## Additional Resources
+- API Documentation: [link]
+- Architecture Documentation: [link]
+   ```
