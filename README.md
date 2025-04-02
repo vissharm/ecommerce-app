@@ -1,5 +1,31 @@
 # E-Commerce Microservices Application
 
+## Prerequisites
+
+### Required Software Versions
+- Node.js >= 14.x
+- npm >= 6.x
+- Docker >= 20.10.x
+- Kubernetes >= 1.19.x
+- Minikube >= 1.25.x
+- Git >= 2.x
+- MongoDB >= 4.4.x
+- Apache Kafka >= 3.6.x
+- Redis >= 6.2.x
+- Apache Zookeeper >= 3.7.x
+
+### Framework Versions
+- Express.js >= 4.17.x
+- React.js >= 17.0.x
+- Material-UI >= 4.11.x
+- Socket.IO >= 4.8.x
+- JWT >= 8.5.x
+
+### System Requirements
+- Minimum 8GB RAM
+- 4 CPU cores
+- 20GB free disk space
+
 ## Technologies Stack
 
 ### Backend
@@ -359,4 +385,243 @@ Key environment variables are stored in:
 ## Additional Resources
 - API Documentation: [link]
 - Architecture Documentation: [link]
+
+## API Documentation
+
+### API Gateway (Port: 8080)
+Base URL: `/api/v1`
+
+#### Authentication Endpoints
+```http
+POST /auth/login
+POST /auth/register
+POST /auth/refresh-token
+GET  /auth/verify-email/:token
+POST /auth/forgot-password
+POST /auth/reset-password
+```
+
+#### User Service (Port: 3001)
+```http
+GET    /users                 # List users (Admin only)
+GET    /users/:id            # Get user details
+PUT    /users/:id            # Update user
+DELETE /users/:id            # Delete user
+GET    /users/profile        # Get own profile
+PUT    /users/profile        # Update own profile
+POST   /users/avatar         # Upload avatar
+GET    /users/:id/addresses  # Get user addresses
+POST   /users/addresses      # Add address
+PUT    /users/addresses/:id  # Update address
+DELETE /users/addresses/:id  # Delete address
+```
+
+#### Product Service (Port: 3004)
+```http
+GET    /products                    # List products
+GET    /products/:id               # Get product details
+POST   /products                   # Create product (Admin)
+PUT    /products/:id               # Update product (Admin)
+DELETE /products/:id               # Delete product (Admin)
+GET    /products/categories        # List categories
+POST   /products/categories        # Create category (Admin)
+PUT    /products/categories/:id    # Update category (Admin)
+DELETE /products/categories/:id    # Delete category (Admin)
+POST   /products/:id/reviews       # Add product review
+GET    /products/:id/reviews       # Get product reviews
+DELETE /products/reviews/:id       # Delete review (Admin/Owner)
+```
+
+#### Order Service (Port: 3002)
+```http
+GET    /orders                # List orders
+GET    /orders/:id           # Get order details
+POST   /orders               # Create order
+PUT    /orders/:id/status    # Update order status
+DELETE /orders/:id           # Cancel order
+GET    /orders/cart          # Get cart
+POST   /orders/cart          # Add to cart
+PUT    /orders/cart/:id      # Update cart item
+DELETE /orders/cart/:id      # Remove from cart
+POST   /orders/checkout      # Checkout process
+GET    /orders/history       # Order history
+```
+
+#### Notification Service (Port: 3003)
+```http
+WebSocket: /socket.io        # Real-time notifications
+GET    /notifications        # List notifications
+PUT    /notifications/:id    # Mark as read
+DELETE /notifications/:id    # Delete notification
+POST   /notifications/subscribe    # Subscribe to notifications
+POST   /notifications/unsubscribe  # Unsubscribe from notifications
+```
+
+### API Request/Response Examples
+
+#### User Authentication
+```json
+// POST /api/v1/auth/login
+Request:
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+
+Response:
+{
+  "token": "jwt.token.here",
+  "refreshToken": "refresh.token.here",
+  "user": {
+    "id": "user_id",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "role": "user"
+  }
+}
+```
+
+#### Product Creation
+```json
+// POST /api/v1/products
+Request:
+{
+  "name": "Product Name",
+  "description": "Product description",
+  "price": 99.99,
+  "category": "category_id",
+  "stock": 100,
+  "images": ["image_url1", "image_url2"]
+}
+
+Response:
+{
+  "id": "product_id",
+  "name": "Product Name",
+  "description": "Product description",
+  "price": 99.99,
+  "category": {
+    "id": "category_id",
+    "name": "Category Name"
+  },
+  "stock": 100,
+  "images": ["image_url1", "image_url2"],
+  "createdAt": "2024-01-20T10:00:00Z"
+}
+```
+
+## Architecture Documentation
+
+### System Components
+
+1. **API Gateway**
+   - Rate limiting: 100 requests/minute
+   - JWT validation
+   - Request routing
+   - Load balancing
+   - Response caching
+   - Error handling
+
+2. **Service Communication**
+   - Synchronous: REST APIs
+   - Asynchronous: Kafka events
+   - WebSocket: Real-time updates
+
+3. **Data Storage**
+   - MongoDB: Primary database
+   - Redis: Caching layer
+   - Kafka: Event store
+
+### Event Flow Patterns
+
+1. **Order Processing Flow**
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Gateway
+    participant OrderService
+    participant ProductService
+    participant NotificationService
+    participant Kafka
+
+    Client->>Gateway: Place Order
+    Gateway->>OrderService: Create Order
+    OrderService->>ProductService: Check Stock
+    ProductService-->>OrderService: Stock Confirmed
+    OrderService->>Kafka: Order Created Event
+    NotificationService->>Kafka: Consume Event
+    NotificationService->>Client: Order Confirmation
+```
+
+2. **Inventory Update Flow**
+```mermaid
+sequenceDiagram
+    participant Admin
+    participant Gateway
+    participant ProductService
+    participant Kafka
+    participant NotificationService
+
+    Admin->>Gateway: Update Stock
+    Gateway->>ProductService: Update Product
+    ProductService->>Kafka: Stock Updated Event
+    NotificationService->>Kafka: Consume Event
+    NotificationService->>Client: Stock Alert
+```
+
+### Security Architecture
+
+1. **Authentication Flow**
+   - JWT-based authentication
+   - Token refresh mechanism
+   - Role-based access control
+   - API key validation for service-to-service communication
+
+2. **Data Security**
+   - Encryption at rest
+   - TLS for data in transit
+   - PII data encryption
+   - Audit logging
+
+### Scalability Design
+
+1. **Horizontal Scaling**
+   - Stateless services
+   - Kubernetes auto-scaling
+   - Load balancer configuration
+   - Database sharding strategy
+
+2. **Caching Strategy**
+   - Redis cache layers
+   - Cache invalidation patterns
+   - Distributed caching
+   - Cache warming
+
+### Monitoring and Logging
+
+1. **Metrics Collection**
+   - Prometheus metrics
+   - Grafana dashboards
+   - Custom business metrics
+   - SLA monitoring
+
+2. **Logging Strategy**
+   - Centralized logging (ELK Stack)
+   - Log levels and retention
+   - Error tracking
+   - Performance monitoring
+
+### Disaster Recovery
+
+1. **Backup Strategy**
+   - Daily automated backups
+   - Point-in-time recovery
+   - Cross-region replication
+   - Backup validation
+
+2. **Failover Process**
+   - Service redundancy
+   - Database failover
+   - Circuit breaker patterns
+   - Fallback mechanisms
    ```
