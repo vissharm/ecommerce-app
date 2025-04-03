@@ -116,6 +116,82 @@ ecommerce-app/
 └── README.md
 ```
 
+## Development Phases
+
+### Phase 1: Local Development (Monolithic Repository)
+- Created master branch with all services in a single repository
+- Basic project structure setup
+- Local development with Express server
+- Key achievements:
+  - Basic service functionality
+  - Local inter-service communication
+  - Frontend-backend integration
+  - Basic authentication flow
+  - Database connectivity
+
+#### Directory Structure (Phase 1)
+```
+ecommerce-app/
+├── backend/
+│   ├── services/
+│   │   ├── user-service/
+│   │   ├── product-service/
+│   │   ├── order-service/
+│   │   └── notification-service/
+├── frontend/
+└── package.json
+```
+
+### Phase 2: Microservices Architecture (Multi-Repository)
+- Split services into separate repositories
+- Added repositories as submodules to main project
+- Updated local development workflow
+- Key changes:
+  - Created separate repositories for each service
+  - Implemented shared library
+  - Updated service communication
+  - Modified development scripts
+
+#### Submodule Setup
+```bash
+# Add submodules
+git submodule add -b main https://github.com/org/user-service.git backend/user-service
+git submodule add -b main https://github.com/org/product-service.git backend/product-service
+git submodule add -b main https://github.com/org/order-service.git backend/order-service
+git submodule add -b main https://github.com/org/notification-service.git backend/notification-service
+git submodule add -b main https://github.com/org/api-gateway.git api-gateway
+git submodule add -b main https://github.com/org/frontend.git frontend
+
+# Initialize and update
+git submodule init
+git submodule update --recursive --remote
+```
+
+### Phase 3: Docker Containerization
+- Implemented Docker deployment
+- Created docker-compose configuration
+- Resolved container networking issues
+- Key implementations:
+  - Service Dockerfiles
+  - Multi-stage builds
+  - Shared library container
+
+### Phase 4: Kubernetes Deployment
+- Implemented Kubernetes manifests
+- Created deployment automation scripts
+- Configured service discovery
+- Key implementations:
+  - Kubernetes manifests for all services
+  - Health check endpoints
+  - Resource limits and requests
+  - Automated deployment scripts
+
+### Phase 5: Autoscaling (Pending)
+Planned implementations:
+- Horizontal Pod Autoscaling (HPA)
+
+Each phase builds upon the previous one, adding complexity and robustness to the system. Ensure all prerequisites are met before moving to the next phase.
+
 ## Service Details
 
 ### API Gateway
@@ -148,6 +224,18 @@ ecommerce-app/
 - Push notifications
 - Real-time updates
 - SMS integration
+
+### Frontend Service (Port: 3000)
+- React-based user interface
+- Redux state management
+- Material-UI components
+- Responsive design
+- Progressive Web App (PWA) features
+- Client-side routing
+- Form validation
+- Real-time updates via WebSocket
+- Lazy loading and code splitting
+- Browser caching strategy
 
 ## Data Flow
 
@@ -194,6 +282,221 @@ graph TD
     KF --> ZK[Zookeeper]
 ```
 
+## Common Issues and Solutions
+
+### 1. Shared Library Issues
+
+#### Building and Consuming Shared Library
+- The shared library must be built before other services
+- Ensure correct version tagging in Docker builds
+
+```bash
+# Build shared library first
+docker build -t shared-lib:latest ./shared-lib
+docker tag shared-lib:latest localhost:5000/shared-lib:latest
+docker push localhost:5000/shared-lib:latest
+
+# Reference in service Dockerfiles
+FROM localhost:5000/shared-lib:latest as shared-lib
+COPY --from=shared-lib /app/dist /app/shared-lib
+```
+
+#### Shared Library Version Mismatch
+- Ensure all services reference the same shared library version
+- Check package.json in each service:
+```json
+{
+  "dependencies": {
+    "shared-lib": "file:../shared-lib"
+  }
+}
+```
+
+### 2. Service Health Checks
+
+#### Missing Health Endpoints
+Each service must implement a health endpoint:
+```javascript
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: '<service-name>',
+    timestamp: new Date().toISOString()
+  });
+});
+```
+
+#### Kubernetes Probe Configuration
+```yaml
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 5
+  periodSeconds: 5
+```
+
+### 3. API Gateway Routing Issues
+
+#### Development vs Production Routes
+Different environments require different route configurations:
+
+```javascript
+const getServiceUrl = (service, defaultPort, path) => {
+  if (process.env.NODE_ENV === 'production') {
+    return `http://${service}.ecommerce.svc.cluster.local`;
+  }
+  return `http://localhost:${defaultPort}`;
+};
+
+const proxyConfig = {
+  '/api/users': {
+    target: getServiceUrl('user-service', 3001),
+    pathRewrite: {'^/api/users': ''},
+    changeOrigin: true
+  },
+  // ... other routes
+};
+```
+
+#### Common Route Mapping Issues
+- Ensure consistent base paths across environments
+- Add trailing slashes handling
+- Include proper error handling:
+
+```javascript
+onError: (err, req, res) => {
+  const status = err.code === 'ECONNREFUSED' ? 501 : 
+                 err.code === 'ETIMEDOUT' ? 504 : 500;
+  res.status(status).json({
+    error: status === 501 ? 'Service unavailable' : 'Service error',
+    service: 'service-name',
+    code: err.code
+  });
+}
+```
+
+### 4. Kubernetes/Minikube Deployment Issues
+
+#### Pod Readiness Requirements
+- All pods must be in Ready state for proper routing
+- Check pod status:
+```bash
+kubectl get pods -n ecommerce
+kubectl describe pod <pod-name> -n ecommerce
+```
+
+#### Troubleshooting Pod Issues
+```bash
+# Check pod logs
+kubectl logs <pod-name> -n ecommerce
+
+# Check events
+kubectl get events -n ecommerce --sort-by='.lastTimestamp'
+
+# Check pod description for probe failures
+kubectl describe pod <pod-name> -n ecommerce | grep -A 10 "Events:"
+```
+
+#### Service Dependencies
+Ensure correct startup order:
+1. Shared Library
+2. MongoDB, Redis, Kafka
+3. Core services (User, Product)
+4. Dependent services (Order, Notification)
+5. API Gateway
+
+### 5. Network and DNS Issues
+
+#### Service Discovery
+- Use correct service names in Kubernetes:
+```bash
+# Service DNS format
+<service-name>.<namespace>.svc.cluster.local
+```
+
+#### Cross-Service Communication
+- For local development:
+```javascript
+const serviceUrl = process.env.NODE_ENV === 'production'
+  ? 'http://service-name.ecommerce.svc.cluster.local'
+  : 'http://localhost:port';
+```
+
+### 6. Environment-Specific Configurations
+
+#### Local Development
+```bash
+# Start services in order
+npm run start:shared-lib
+npm run start:dependencies
+npm run start:services
+npm run start:gateway
+```
+
+#### Docker Compose
+```yaml
+services:
+  shared-lib:
+    build:
+      context: ./shared-lib
+      dockerfile: Dockerfile
+    image: shared-lib:latest
+
+  service-name:
+    build:
+      context: ./service-name
+      dockerfile: Dockerfile
+    depends_on:
+      - shared-lib
+```
+
+#### Kubernetes
+```yaml
+# Add init containers for dependency checking
+initContainers:
+  - name: wait-for-mongodb
+    image: busybox
+    command: ['sh', '-c', 'until nc -z mongodb 27017; do echo waiting for mongodb; sleep 2; done;']
+```
+
+### 7. Monitoring and Debugging
+
+#### Health Check Dashboard
+Monitor service health:
+```bash
+# Get all service health endpoints
+kubectl get services -n ecommerce -o json | jq -r '.items[] | .metadata.name + " : " + .spec.clusterIP'
+
+# Check individual service health
+curl http://<cluster-ip>:<port>/health
+```
+
+#### Debug Mode
+Enable debug logging:
+```javascript
+const DEBUG = process.env.DEBUG === 'true';
+if (DEBUG) {
+  app.use((req, res, next) => {
+    console.log(`${req.method} ${req.url}`);
+    next();
+  });
+}
+```
+
+Remember to check the logs of all components when troubleshooting:
+- API Gateway logs
+- Individual service logs
+- MongoDB logs
+- Kafka logs
+- Kubernetes events
+
 ## Repository Setup
 
 1. Clone the main repository:
@@ -202,7 +505,25 @@ git clone https://github.com/your-org/ecommerce-app.git
 cd ecommerce-app
 ```
 
-2. Initialize and update submodules:
+2. Run the setup script to initialize and update all submodules:
+```bash
+# For Windows PowerShell
+.\scripts\setup.ps1
+
+# Or using npm
+npm run start
+```
+
+This setup script will:
+- Initialize git repository if not already initialized
+- Set up all submodules with correct branches
+- Update submodules to latest versions
+- Install root level dependencies
+- Build and link shared library
+- Install dependencies for all services
+- Set up MongoDB
+
+3. Manual submodule management (if needed):
 ```bash
 # Initialize submodules
 git submodule init
@@ -277,7 +598,16 @@ docker-compose restart [service-name]
 
 ### 3. Kubernetes Deployment
 
-1. Check cluster status:
+1. Deploy services:
+```bash
+# Deploy all services
+kubectl apply -f k8s/
+
+# Deploy specific service
+kubectl apply -f k8s/[service-name].yaml
+```
+
+2. Check deployment status:
 ```bash
 # View all pods in ecommerce namespace
 kubectl get pods -n ecommerce
@@ -289,7 +619,17 @@ kubectl get svc -n ecommerce
 kubectl get deployments -n ecommerce
 ```
 
-2. Pod management:
+3. Get application URL:
+```bash
+# Get API Gateway URL to access the application in browser
+minikube service api-gateway -n ecommerce --url
+
+# The command will output something like:
+# http://192.168.49.2:31234
+# Use this URL in your browser to access the application
+```
+
+4. Pod management:
 ```bash
 # Get pod logs
 kubectl logs [pod-name] -n ecommerce
@@ -304,14 +644,8 @@ kubectl exec -it [pod-name] -n ecommerce -- /bin/sh
 kubectl delete pod [pod-name] -n ecommerce
 ```
 
-3. Deployment commands:
+5. Scaling and updates:
 ```bash
-# Deploy all services
-kubectl apply -f k8s/
-
-# Deploy specific service
-kubectl apply -f k8s/[service-name].yaml
-
 # Scale deployment
 kubectl scale deployment [deployment-name] --replicas=3 -n ecommerce
 
@@ -319,7 +653,7 @@ kubectl scale deployment [deployment-name] --replicas=3 -n ecommerce
 kubectl rollout restart deployment [deployment-name] -n ecommerce
 ```
 
-4. Debugging:
+6. Debugging:
 ```bash
 # Check pod events
 kubectl get events -n ecommerce --sort-by='.lastTimestamp'

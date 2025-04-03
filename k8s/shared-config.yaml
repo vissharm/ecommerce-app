@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shared-config
+  namespace: ecommerce
+data:
+  SHARED_JWT_SECRET: "your-secure-jwt-secret"
+  JWT_EXPIRATION: "5m"

@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: ecommerce
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+    spec:
+      initContainers:
+      - name: wait-for-dependencies
+        image: busybox:1.28
+        command: ['sh', '-c', 'echo "Checking dependencies..." && 
+          until nc -z kafka-service 9092; do echo "Waiting for Kafka"; sleep 5; done && 
+          until nc -z mongodb 27017; do echo "Waiting for MongoDB"; sleep 5; done && 
+          echo "Dependencies are ready"']
+      - name: init-shared-lib
+        image: busybox:1.28
+        command: ['sh', '-c', 'mkdir -p /shared && chmod 777 /shared']
+        volumeMounts:
+        - name: shared-lib-storage
+          mountPath: /shared
+      - name: copy-shared-lib
+        image: shared-lib:latest
+        imagePullPolicy: Never
+        command: ['sh', '-c', 'cp /output/shared-1.0.0.tgz /shared/ && ls -la /shared/']
+        volumeMounts:
+        - name: shared-lib-storage
+          mountPath: /shared
+      containers:
+      - name: order-service
+        image: order-service:latest
+        imagePullPolicy: Never
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            if [ -f /shared/shared-1.0.0.tgz ]; then
+              echo "Installing shared library..."
+              npm install /shared/shared-1.0.0.tgz
+            else
+              echo "Shared library not found!"
+              exit 1
+            fi
+            echo "Starting service..."
+            npm run start
+        ports:
+        - containerPort: 3002
+        env:
+        - name: PORT
+          value: "3002"
+        - name: MONGO_URI
+          value: "mongodb://mongodb:27017/order-service"
+        - name: KAFKA_BROKER
+          valueFrom:
+            configMapKeyRef:
+              name: ecommerce-config
+              key: KAFKA_BROKER
+        envFrom:
+        - configMapRef:
+            name: ecommerce-config
+        volumeMounts:
+        - name: shared-lib-storage
+          mountPath: /shared
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 3002
+          failureThreshold: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3002
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3002
+          initialDelaySeconds: 30
+          periodSeconds: 15
+      volumes:
+      - name: shared-lib-storage
+        emptyDir: 
+          medium: Memory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: ecommerce
+spec:
+  ports:
+  - port: 3002
+  selector:
+    app: order-service
+
+
+
+
+
+
+
+

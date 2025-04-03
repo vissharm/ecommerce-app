@@ -156,7 +156,7 @@ async function createData() {
     // First create users and products
     for (const service of services) {
       if (service.name === 'user-service' || service.name === 'product-service') {
-        const dbUrl = `mongodb://127.0.0.1:27017/${service.name}`;
+        const dbUrl = `mongodb://mongodb:27017/${service.name}`;
         console.log(`\n📦 Setting up ${service.name}...`);
         
         const connection = await connectToDb(dbUrl);
@@ -182,7 +182,7 @@ async function createData() {
 
     // Now create orders
     const orderService = services.find(s => s.name === 'order-service');
-    const dbUrl = `mongodb://127.0.0.1:27017/${orderService.name}`;
+    const dbUrl = `mongodb://mongodb:27017/${orderService.name}`;
     console.log(`\n📦 Setting up ${orderService.name}...`);
     
     const orderConn = await connectToDb(dbUrl);
@@ -209,7 +209,7 @@ async function createData() {
     const notificationService = services.find(s => s.name === 'notification-service');
     console.log(`\n📦 Setting up ${notificationService.name}...`);
     
-    const notifConn = await connectToDb(`mongodb://127.0.0.1:27017/${notificationService.name}`);
+    const notifConn = await connectToDb(`mongodb://mongodb:27017/${notificationService.name}`);
     await safeDropCollection(notifConn, 'notifications');
 
     const NotificationModel = notifConn.model('Notification', notificationSchema);

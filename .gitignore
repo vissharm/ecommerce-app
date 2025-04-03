@@ -1,8 +1,8 @@
 # Dependencies
 node_modules/
-frontend/
-backend/
-api-gateway/
+frontend
+backend
+api-gateway
 
 # Production environment files
 .env.production

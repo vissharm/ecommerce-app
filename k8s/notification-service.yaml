@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: ecommerce
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      initContainers:
+      - name: wait-for-dependencies
+        image: busybox:1.28
+        imagePullPolicy: IfNotPresent
+        command: ['sh', '-c', 'echo "Checking dependencies..." && 
+          until nc -z kafka-service 9092; do echo "Waiting for Kafka"; sleep 5; done && 
+          until nc -z mongodb 27017; do echo "Waiting for MongoDB"; sleep 5; done && 
+          echo "Dependencies are ready"']
+      - name: init-shared-lib
+        image: busybox:1.28
+        imagePullPolicy: IfNotPresent
+        command: ['sh', '-c', 'mkdir -p /shared && chmod 777 /shared']
+        volumeMounts:
+        - name: shared-lib-storage
+          mountPath: /shared
+      - name: copy-shared-lib
+        image: shared-lib:latest
+        imagePullPolicy: Never
+        command: ['sh', '-c', 'cp /output/shared-1.0.0.tgz /shared/ && ls -la /shared/']
+        volumeMounts:
+        - name: shared-lib-storage
+          mountPath: /shared
+      containers:
+      - name: notification-service
+        image: notification-service:latest
+        imagePullPolicy: Never
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            if [ -f /shared/shared-1.0.0.tgz ]; then
+              echo "Installing shared library..."
+              npm install /shared/shared-1.0.0.tgz
+            else
+              echo "Shared library not found!"
+              exit 1
+            fi
+            echo "Starting service..."
+            npm run start
+        ports:
+        - containerPort: 3003
+        env:
+        - name: PORT
+          value: "3003"
+        - name: MONGO_URI
+          value: "mongodb://mongodb:27017/notification-service"
+        - name: ORDER_SERVICE_MONGO_URI
+          value: "mongodb://mongodb:27017/order-service"
+        - name: KAFKA_BROKER
+          valueFrom:
+            configMapKeyRef:
+              name: ecommerce-config
+              key: KAFKA_BROKER
+        imagePullPolicy: Never
+        envFrom:
+        - configMapRef:
+            name: ecommerce-config
+        volumeMounts:
+        - name: shared-lib-storage
+          mountPath: /shared
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 3003
+          failureThreshold: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3003
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3003
+          initialDelaySeconds: 30
+          periodSeconds: 15
+      volumes:
+      - name: shared-lib-storage
+        emptyDir: 
+          medium: Memory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: ecommerce
+spec:
+  ports:
+  - port: 3003
+    targetPort: 3003
+  selector:
+    app: notification-service
+
+
+
+
+
+
+
+
+

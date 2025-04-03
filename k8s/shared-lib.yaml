@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: shared-lib-pvc
+  namespace: ecommerce
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shared-lib
+  namespace: ecommerce
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shared-lib
+  template:
+    metadata:
+      labels:
+        app: shared-lib
+    spec:
+      containers:
+      - name: shared-lib
+        image: shared-lib:latest
+        volumeMounts:
+        - name: shared-lib-storage
+          mountPath: /output
+      volumes:
+      - name: shared-lib-storage
+        persistentVolumeClaim:
+          claimName: shared-lib-pvc
