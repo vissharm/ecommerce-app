@@ -1,4 +1,5 @@
 # E-Commerce Microservices Application
+### This is created for assignment and learning purpose
 
 ## Prerequisites
 
