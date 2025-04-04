@@ -199,44 +199,33 @@ Each phase builds upon the previous one, adding complexity and robustness to the
 - Route management
 - Request validation
 - Authentication & Authorization
-- Rate limiting
-- Load balancing
+- Metrics/Logging
 
 ### User Service
 - User management
 - Authentication
 - Profile management
-- Role-based access control
 
 ### Product Service
 - Product catalog management
 - Inventory management
-- Product search & filtering
-- Category management
 
 ### Order Service
 - Order processing
-- Payment integration
 - Order status management
-- Shopping cart management
 
 ### Notification Service
-- Email notifications
 - Push notifications
 - Real-time updates
-- SMS integration
 
 ### Frontend Service (Port: 3000)
 - React-based user interface
-- Redux state management
+- State management
 - Material-UI components
 - Responsive design
-- Progressive Web App (PWA) features
 - Client-side routing
 - Form validation
 - Real-time updates via WebSocket
-- Lazy loading and code splitting
-- Browser caching strategy
 
 ## Data Flow
 
@@ -485,7 +474,7 @@ Enable debug logging:
 const DEBUG = process.env.DEBUG === 'true';
 if (DEBUG) {
   app.use((req, res, next) => {
-    console.log(`${req.method} ${req.url}`);
+    console.log(`req.method{req.method} {req.url}`);
     next();
   });
 }
