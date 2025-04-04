@@ -1,3 +1,11 @@
+param(
+    [Parameter()]
+    [System.Boolean]$isDevServer = $false
+)
+
+# Log the received parameter value
+Write-Host "`nReceived isDevServer parameter value: $isDevServer" -ForegroundColor Cyan
+
 # Function to get branch for a submodule
 function Get-SubmoduleBranch {
     param (
@@ -110,9 +118,12 @@ Push-Location frontend
 npm install
 Pop-Location
 
-# Setup MongoDB
+# Setup MongoDB with the isDevServer flag
 Write-Host "`nSetting up MongoDB..." -ForegroundColor Green
-node scripts/setup.js
+$devServerValue = if ([bool]$isDevServer) { "true" } else { "false" }
+$devServerFlag = "--isDevServer=$devServerValue"
+Write-Host "Passing flag to setup.js: $devServerFlag" -ForegroundColor Cyan
+node scripts/setup.js $devServerFlag
 
 Write-Host "`n✅ Setup completed successfully!" -ForegroundColor Green
 

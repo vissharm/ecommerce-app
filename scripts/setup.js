@@ -2,6 +2,19 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
+// Get command line arguments and set default value for isDevServer
+const args = process.argv.slice(2);
+const isDevServer = args.find(arg => arg.startsWith('--isDevServer='))?.split('=')[1] === 'true';
+
+console.log('\nsetup.js received arguments:', args);
+console.log('isDevServer value:', isDevServer);
+
+// Function to get MongoDB URL based on environment
+function getMongoDbUrl(serviceName) {
+  const host = isDevServer ? '127.0.0.1' : 'mongodb';
+  return `mongodb://${host}:27017/${serviceName}`;
+}
+
 // Define schemas
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -156,7 +169,7 @@ async function createData() {
     // First create users and products
     for (const service of services) {
       if (service.name === 'user-service' || service.name === 'product-service') {
-        const dbUrl = `mongodb://mongodb:27017/${service.name}`;
+        const dbUrl = getMongoDbUrl(service.name);
         console.log(`\n📦 Setting up ${service.name}...`);
         
         const connection = await connectToDb(dbUrl);
@@ -182,7 +195,7 @@ async function createData() {
 
     // Now create orders
     const orderService = services.find(s => s.name === 'order-service');
-    const dbUrl = `mongodb://mongodb:27017/${orderService.name}`;
+    const dbUrl = getMongoDbUrl(orderService.name);
     console.log(`\n📦 Setting up ${orderService.name}...`);
     
     const orderConn = await connectToDb(dbUrl);
@@ -209,7 +222,7 @@ async function createData() {
     const notificationService = services.find(s => s.name === 'notification-service');
     console.log(`\n📦 Setting up ${notificationService.name}...`);
     
-    const notifConn = await connectToDb(`mongodb://mongodb:27017/${notificationService.name}`);
+    const notifConn = await connectToDb(getMongoDbUrl(notificationService.name));
     await safeDropCollection(notifConn, 'notifications');
 
     const NotificationModel = notifConn.model('Notification', notificationSchema);

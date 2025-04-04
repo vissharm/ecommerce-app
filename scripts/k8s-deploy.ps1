@@ -593,15 +593,15 @@ try {
     Write-Host "❌ Deployment failed: $_" -ForegroundColor Red
     
     if (-not $SkipCleanup) {
-        # Write-Host "Attempting to recover..." -ForegroundColor Yellow
-        # try {
-        #     Reset-MinikubeEnvironment
-        #     Write-Host "Environment reset completed. Please try deploying again." -ForegroundColor Green
-        # } catch {
+        Write-Host "Attempting to recover..." -ForegroundColor Yellow
+        try {
+            Reset-MinikubeEnvironment
+            Write-Host "Environment reset completed. Please try deploying again." -ForegroundColor Green
+        } catch {
             Write-Host "Recovery failed. Please manually reset Minikube:" -ForegroundColor Red
             Write-Host "1. Run 'minikube delete --all'" -ForegroundColor Yellow
             Write-Host "2. Run 'minikube start --driver=docker'" -ForegroundColor Yellow
-        # }
+        }
     } else {
         Write-Host "Deployment failed but keeping environment intact (SkipCleanup=true)" -ForegroundColor Yellow
         Write-Host "Current pod status:" -ForegroundColor Cyan

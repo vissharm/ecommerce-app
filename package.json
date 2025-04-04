@@ -8,7 +8,10 @@
     "frontend"
   ],
   "scripts": {
-    "start": "powershell -ExecutionPolicy Bypass -File ./scripts/setup.ps1",
+    "initialize:monorepo_dev": "powershell -ExecutionPolicy Bypass -Command \"& { ./scripts/setup.ps1 -isDevServer:$true }\"",
+    "initialize:mongodb_dev": "node scripts/setup.js --isDevServer=true",
+    "run_dev_server": "start-services.bat",
+    "start": "npm run start:monorepo && npm run start_dev_server",
     "docker:run": "docker-compose build --no-cache && docker-compose up -d",
     "k8s_deploy": "powershell -ExecutionPolicy Bypass -File ./scripts/k8s-deploy.ps1",
     "k8s_deploy:fast": "powershell -ExecutionPolicy Bypass -File ./scripts/k8s-deploy.ps1 -SkipCleanup",
