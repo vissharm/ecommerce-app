@@ -417,6 +417,13 @@ function Test-KubernetesConnection {
 function Initialize-MongoDB {
     Write-Host "Initializing MongoDB with sample data..." -ForegroundColor Yellow
     
+    # Clean up any existing MongoDB init jobs
+    Write-Host "Cleaning up any existing MongoDB init jobs..." -ForegroundColor Yellow
+    kubectl get jobs -n ecommerce -o name | Where-Object { $_ -like "*mongo-init-job*" } | ForEach-Object {
+        kubectl delete $_ -n ecommerce --force --grace-period=0
+    }
+    Start-Sleep -Seconds 5  # Wait for cleanup to complete
+    
     # Apply the MongoDB init ConfigMap
     kubectl apply -f k8s/mongo-init-configmap.yaml
     if ($LASTEXITCODE -ne 0) {
@@ -443,10 +450,10 @@ spec:
           echo "Waiting for MongoDB to be ready..."
           sleep 30
           mkdir -p /tmp/init && cd /tmp/init &&
-          cp /scripts/initialized_database.js . &&
+          cp /scripts/initialize_database.js . &&
           npm init -y &&
           npm install mongoose bcryptjs &&
-          node initialized_database.js
+          node initialize_database.js
         volumeMounts:
         - name: init-script
           mountPath: /scripts
@@ -594,14 +601,14 @@ try {
     
     if (-not $SkipCleanup) {
         Write-Host "Attempting to recover..." -ForegroundColor Yellow
-        try {
-            Reset-MinikubeEnvironment
-            Write-Host "Environment reset completed. Please try deploying again." -ForegroundColor Green
-        } catch {
+        # try {
+        #     Reset-MinikubeEnvironment
+        #     Write-Host "Environment reset completed. Please try deploying again." -ForegroundColor Green
+        # } catch {
             Write-Host "Recovery failed. Please manually reset Minikube:" -ForegroundColor Red
             Write-Host "1. Run 'minikube delete --all'" -ForegroundColor Yellow
             Write-Host "2. Run 'minikube start --driver=docker'" -ForegroundColor Yellow
-        }
+        # }
     } else {
         Write-Host "Deployment failed but keeping environment intact (SkipCleanup=true)" -ForegroundColor Yellow
         Write-Host "Current pod status:" -ForegroundColor Cyan
@@ -616,52 +623,3 @@ try {
 
 Write-Host "✅ Deployment complete!" -ForegroundColor Green
 Write-Host "Use the above URL to access your application"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

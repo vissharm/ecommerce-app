@@ -13,7 +13,7 @@
     "submodules:setup": "npm run submodules:init && npm run submodules:update",
   
     "initialize:monorepo_dev_with_db_initialization": "powershell -ExecutionPolicy Bypass -Command \"& { ./scripts/setup.ps1 -isDevServer:$true }\"",
-    "initialize:db": "node scripts/initialized_database.js --isDevServer=true",
+    "initialize:db": "node scripts/initialize_database.js --isDevServer=true",
     "run_dev_server": "start-services.bat",
 
     "initialize_db_and_run_local_server": "initialize:monorepo_dev_with_db_initialization && npm run start_dev_server",

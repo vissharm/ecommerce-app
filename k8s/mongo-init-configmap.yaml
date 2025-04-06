@@ -4,7 +4,7 @@ metadata:
   name: mongo-init-script
   namespace: ecommerce
 data:
-  setup.js: |
+  initialize_database.js: |    # Changed from setup.js to initialize_database.js
     const mongoose = require('mongoose');
     const bcrypt = require('bcryptjs');
 
@@ -229,5 +229,6 @@ data:
     // Run the setup
     console.log('🚀 Starting services setup...');
     createData();
+
 
 

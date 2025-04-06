@@ -104,6 +104,7 @@ ecommerce-app/
 ├── scripts/                    # Deployment and utility scripts
 │   ├── setup.ps1
 │   ├── k8s-deploy.ps1
+│   ├── initialize_database.js  # Updated from initialized_database.js
 │   └── start-services.bat
 │
 ├── docker-compose.yml          # Docker compose configuration
@@ -611,6 +612,10 @@ npm run k8s_deploy_with_cleanup
 
 # Quick deploy without cleaning up resources and rebuilding images
 npm run k8s_deploy:fast_without_cleanup
+
+# Run below command to expose the api-gateway port to access the application - https://localhost:<port_returned_by_below_command>
+# This is only needed if above scripts not emitting the port in the end
+minikube service api-gateway -n ecommerce --url
 ```
 
 1. Deploy services:
