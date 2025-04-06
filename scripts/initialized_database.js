@@ -6,7 +6,7 @@ require('dotenv').config();
 const args = process.argv.slice(2);
 const isDevServer = args.find(arg => arg.startsWith('--isDevServer='))?.split('=')[1] === 'true';
 
-console.log('\nsetup.js received arguments:', args);
+console.log('\initialized_database.js received arguments:', args);
 console.log('isDevServer value:', isDevServer);
 
 // Function to get MongoDB URL based on environment

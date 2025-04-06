@@ -539,6 +539,21 @@ git rm [path]
 
 ### 1. Local Development (Without Containers)
 
+Available NPM Commands:
+```bash
+# Initialize all submodules and build the complete monorepo
+npm run initialize:monorepo_dev_with_db_initialization
+
+# Initialize only the database
+npm run initialize:db
+
+# Start the local development server using command prompt
+npm run run_dev_server
+
+# Single command to initialize everything and run local development server
+npm run initialize_db_and_run_local_server
+```
+
 1. Install dependencies and setup:
 ```bash
 # Run the setup script
@@ -562,14 +577,20 @@ Key points for start-services.bat:
 
 ### 2. Docker Compose Deployment
 
-Key commands:
+Available NPM Commands:
 ```bash
-# Build and start all services
-docker-compose up --build -d
+# Deploy and run application using docker-compose
+npm run docker-compose:run
 
-# View logs
-docker-compose logs -f
+# Cleanup docker-compose created/initialized resources
+npm run docker-compose:cleanup
 
+# View logs for troubleshooting
+docker-compose:logs
+```
+
+Additional Docker Commands:
+```bash
 # View logs for specific service
 docker-compose logs -f [service-name]
 
@@ -587,6 +608,15 @@ docker-compose restart [service-name]
 ```
 
 ### 3. Kubernetes Deployment
+
+Available NPM Commands:
+```bash
+# Deploy and run application using kubernetes/minikube
+npm run k8s_deploy_with_cleanup
+
+# Quick deploy without cleaning up resources and rebuilding images
+npm run k8s_deploy:fast_without_cleanup
+```
 
 1. Deploy services:
 ```bash
@@ -613,10 +643,6 @@ kubectl get deployments -n ecommerce
 ```bash
 # Get API Gateway URL to access the application in browser
 minikube service api-gateway -n ecommerce --url
-
-# The command will output something like:
-# http://192.168.49.2:31234
-# Use this URL in your browser to access the application
 ```
 
 4. Pod management:

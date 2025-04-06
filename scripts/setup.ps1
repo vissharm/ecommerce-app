@@ -122,8 +122,8 @@ Pop-Location
 Write-Host "`nSetting up MongoDB..." -ForegroundColor Green
 $devServerValue = if ([bool]$isDevServer) { "true" } else { "false" }
 $devServerFlag = "--isDevServer=$devServerValue"
-Write-Host "Passing flag to setup.js: $devServerFlag" -ForegroundColor Cyan
-node scripts/setup.js $devServerFlag
+Write-Host "Passing flag to initialized_database.js: $devServerFlag" -ForegroundColor Cyan
+node scripts/initialized_database.js $devServerFlag
 
 Write-Host "`n✅ Setup completed successfully!" -ForegroundColor Green
 

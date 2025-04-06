@@ -443,10 +443,10 @@ spec:
           echo "Waiting for MongoDB to be ready..."
           sleep 30
           mkdir -p /tmp/init && cd /tmp/init &&
-          cp /scripts/setup.js . &&
+          cp /scripts/initialized_database.js . &&
           npm init -y &&
           npm install mongoose bcryptjs &&
-          node setup.js
+          node initialized_database.js
         volumeMounts:
         - name: init-script
           mountPath: /scripts
@@ -616,6 +616,7 @@ try {
 
 Write-Host "✅ Deployment complete!" -ForegroundColor Green
 Write-Host "Use the above URL to access your application"
+
 
 
 

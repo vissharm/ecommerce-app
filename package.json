@@ -8,16 +8,21 @@
     "frontend"
   ],
   "scripts": {
-    "initialize:monorepo_dev": "powershell -ExecutionPolicy Bypass -Command \"& { ./scripts/setup.ps1 -isDevServer:$true }\"",
-    "initialize:mongodb_dev": "node scripts/setup.js --isDevServer=true",
+    "submodules:init": "git submodule init",
+    "submodules:update": "git submodule update --recursive --remote --force",
+    "submodules:setup": "npm run submodules:init && npm run submodules:update",
+  
+    "initialize:monorepo_dev_with_db_initialization": "powershell -ExecutionPolicy Bypass -Command \"& { ./scripts/setup.ps1 -isDevServer:$true }\"",
+    "initialize:db": "node scripts/initialized_database.js --isDevServer=true",
     "run_dev_server": "start-services.bat",
-    "start": "npm run start:monorepo && npm run start_dev_server",
-    "docker:run": "docker-compose build --no-cache && docker-compose up -d",
-    "k8s_deploy": "powershell -ExecutionPolicy Bypass -File ./scripts/k8s-deploy.ps1",
-    "k8s_deploy:fast": "powershell -ExecutionPolicy Bypass -File ./scripts/k8s-deploy.ps1 -SkipCleanup",
-    "test": "npm run test --workspaces",
-    "build": "npm run build --workspaces",
-    "update-submodules": "git submodule update --remote --merge",
-    "logs": "docker-compose logs -f"
+
+    "initialize_db_and_run_local_server": "initialize:monorepo_dev_with_db_initialization && npm run start_dev_server",
+  
+    "docker-compose:run": "docker-compose build --no-cache && docker-compose up -d",
+    "docker-compose:cleanup": "docker-compose down -v --rmi all",
+    "docker-compose:logs": "docker-compose logs -f",
+
+    "k8s_deploy_with_cleanup": "powershell -ExecutionPolicy Bypass -File ./scripts/k8s-deploy.ps1",
+    "k8s_deploy:fast_without_cleanup": "powershell -ExecutionPolicy Bypass -File ./scripts/k8s-deploy.ps1 -SkipCleanup"
   }
 }
