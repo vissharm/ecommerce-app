@@ -12,7 +12,6 @@
 - Git >= 2.x
 - MongoDB >= 4.4.x
 - Apache Kafka >= 3.6.x
-- Redis >= 6.2.x
 - Apache Zookeeper >= 3.7.x
 
 ### Framework Versions
@@ -47,10 +46,6 @@
 ### DevOps & Infrastructure
 - **Docker** - Containerization
 - **Kubernetes** - Container orchestration
-- **Nginx** - API Gateway & reverse proxy
-- **Jenkins** - CI/CD pipeline
-- **ELK Stack** - Logging (Elasticsearch, Logstash, Kibana)
-- **Prometheus & Grafana** - Monitoring
 
 ## Project Structure
 ```
