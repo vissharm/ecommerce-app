@@ -223,6 +223,13 @@ Each phase builds upon the previous one, adding complexity and robustness to the
 - Form validation
 - Real-time updates via WebSocket
 
+### Shared Library
+- Common utilities and models
+- Versioned package (1.0.0)
+- Used by all services
+- Built as npm package
+- Mounted in Kubernetes deployments
+
 ## Data Flow
 
 ```mermaid
@@ -279,13 +286,14 @@ graph TD
 ```bash
 # Build shared library first
 docker build -t shared-lib:latest ./shared-lib
-docker tag shared-lib:latest localhost:5000/shared-lib:latest
-docker push localhost:5000/shared-lib:latest
 
 # Reference in service Dockerfiles
-FROM localhost:5000/shared-lib:latest as shared-lib
-COPY --from=shared-lib /app/dist /app/shared-lib
+FROM shared-lib:latest as shared
+COPY --from=shared /output/shared-1.0.0.tgz ./
+RUN npm install shared-1.0.0.tgz
 ```
+
+For Kubernetes deployments, the shared library is mounted as a volume and installed during container startup. See the service yaml files for details.
 
 #### Shared Library Version Mismatch
 - Ensure all services reference the same shared library version
@@ -660,7 +668,7 @@ kubectl exec -it [pod-name] -n ecommerce -- /bin/sh
 kubectl delete pod [pod-name] -n ecommerce
 ```
 
-5. Scaling and updates:
+5. Scaling and updates (partially done work in local and beyond scope of this assignment):
 ```bash
 # Scale deployment
 kubectl scale deployment [deployment-name] --replicas=3 -n ecommerce
@@ -677,9 +685,29 @@ kubectl get events -n ecommerce --sort-by='.lastTimestamp'
 # Check init container logs
 kubectl logs [pod-name] -c [init-container-name] -n ecommerce
 
-# Port forward service
+# Port forward service - if face access issue
 kubectl port-forward service/[service-name] [local-port]:[service-port] -n ecommerce
 ```
+
+### Development Modes
+
+#### 1. Direct Local Development
+- Services run directly on host
+- MongoDB runs in Docker
+- Hot reloading enabled
+- Shared library linked locally
+
+#### 2. Docker Development
+- All services in containers
+- Development-specific configurations
+- Volume mounts for hot reloading
+- Docker Compose override support
+
+#### 3. Minikube Development
+- Local Kubernetes development
+- Service discovery enabled
+- ConfigMap for environment variables
+- Ingress controller for routing
 
 ## Service URLs
 
