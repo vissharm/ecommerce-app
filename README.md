@@ -505,7 +505,7 @@ cd ecommerce-app
 .\scripts\setup.ps1
 
 # Or using npm
-npm run start
+npm run initialize:monorepo_dev_with_db_initialization
 ```
 
 This setup script will:
