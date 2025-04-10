@@ -951,16 +951,14 @@ sequenceDiagram
 1. **Authentication Flow**
    - JWT-based authentication
    - Token refresh mechanism
-   - Role-based access control
    - API key validation for service-to-service communication
 
 2. **Data Security**
    - Encryption at rest
    - TLS for data in transit
-   - PII data encryption
    - Audit logging
 
-### Scalability Design
+### Scalability Design (Future scope)
 
 1. **Horizontal Scaling** (Future scope)
    - Stateless services
