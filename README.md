@@ -401,7 +401,7 @@ kubectl describe pod <pod-name> -n ecommerce | grep -A 10 "Events:"
 #### Service Dependencies
 Ensure correct startup order:
 1. Shared Library
-2. MongoDB, Redis, Kafka
+2. MongoDB, Kafka
 3. Core services (User, Product)
 4. Dependent services (Order, Notification)
 5. API Gateway
@@ -907,7 +907,6 @@ Response:
 
 3. **Data Storage**
    - MongoDB: Primary database
-   - Redis: Caching layer
    - Kafka: Event store
 
 ### Event Flow Patterns
@@ -963,43 +962,206 @@ sequenceDiagram
 
 ### Scalability Design
 
-1. **Horizontal Scaling**
+1. **Horizontal Scaling** (Future scope)
    - Stateless services
    - Kubernetes auto-scaling
    - Load balancer configuration
    - Database sharding strategy
 
-2. **Caching Strategy**
-   - Redis cache layers
-   - Cache invalidation patterns
-   - Distributed caching
-   - Cache warming
-
 ### Monitoring and Logging
 
-1. **Metrics Collection**
-   - Prometheus metrics
-   - Grafana dashboards
-   - Custom business metrics
-   - SLA monitoring
-
-2. **Logging Strategy**
-   - Centralized logging (ELK Stack)
+1. **Logging Strategy**
    - Log levels and retention
    - Error tracking
-   - Performance monitoring
 
-### Disaster Recovery
+## Kubernetes Deployment Script (k8s-deploy.ps1)
 
-1. **Backup Strategy**
-   - Daily automated backups
-   - Point-in-time recovery
-   - Cross-region replication
-   - Backup validation
+### Overview
+The script automates the deployment of the e-commerce application to a Minikube cluster. It handles environment setup, service deployment, and health checks.
 
-2. **Failover Process**
-   - Service redundancy
-   - Database failover
-   - Circuit breaker patterns
-   - Fallback mechanisms
+### Key Functions
+
+1. Environment Setup
+```powershell
+Test-KubernetesConnection
+- Verifies Minikube status
+- Starts Minikube if not running
+- Ensures correct Kubernetes context
+- Validates cluster connectivity
+```
+
+2. Deployment Process
+```powershell
+# Main deployment flow
+- Cleans up existing deployments (optional)
+- Configures Docker to use Minikube daemon
+- Creates namespace and applies ConfigMaps
+- Builds and deploys services in order:
+  1. Shared library
+  2. Core services (user, product, order, notification)
+  3. API Gateway
+```
+
+3. Infrastructure Components
+```powershell
+# StatefulSet deployments
+- MongoDB (with initialization)
+- Kafka
+- Zookeeper
+
+# Service deployments
+- user-service
+- product-service
+- order-service
+- notification-service
+- api-gateway
+```
+
+### Usage Options
+```powershell
+# Full deployment with cleanup
+./scripts/k8s-deploy.ps1
+
+# Deploy without cleanup (faster)
+./scripts/k8s-deploy.ps1 -SkipCleanup
+```
+
+### Key Features
+- Automated environment setup
+- Health checks and readiness probes
+- Error handling and recovery
+- Pod status monitoring
+- Database initialization
+- Service dependency management
+
+### Monitoring and Debugging
+- Pod status checks
+- Service connectivity tests
+- Detailed error logging
+- Debug commands for troubleshooting
+
+## Setup Script (setup.ps1)
+
+### Purpose
+Initial project setup script that prepares the development environment by installing dependencies and initializing required components.
+
+### Key Operations
+1. Dependencies Installation
+   - Root level npm packages
+   - Shared library setup and linking
+   - Service-specific dependencies
+   - Frontend dependencies
+
+2. API Gateway Setup
+   - Install dependencies
+   - Link shared library
+   - Configure routes
+
+3. Database Initialization
+   - Calls initialize_database.js
+   - Sets up initial data
+   - Configures development environment
+
+### Usage
+```powershell
+# Full setup
+.\scripts\setup.ps1
+
+# Through npm
+npm run setup
+```
+
+## Database Initialization Script (initialize_database.js)
+
+### Purpose
+Sets up the MongoDB databases with initial data for development and testing.
+
+### Data Initialization
+1. User Service Data
+   ```javascript
+   {
+     name: 'user-service',
+     data: [
+       // Sample users with hashed passwords
+       { name: 'John Doe', email: 'john@example.com' },
+       { name: 'Jane Smith', email: 'jane@example.com' }
+     ]
+   }
    ```
+
+2. Product Service Data
+   ```javascript
+   {
+     name: 'product-service',
+     data: [
+       // Sample products
+       { name: 'Laptop', price: 999.99, stock: 50 },
+       { name: 'Smartphone', price: 699.99, stock: 100 }
+     ]
+   }
+   ```
+
+### Features
+- Safe collection dropping
+- Schema validation
+- Connection management
+- Error handling
+- Development/Production mode support
+
+### Usage
+```bash
+# Direct execution
+node scripts/initialize_database.js
+
+# With development server flag
+node scripts/initialize_database.js --isDevServer=true
+```
+
+## Service Starter Script (start-services.bat)
+
+### Purpose
+Windows batch script that launches all required services in separate terminal windows for local development.
+
+### Service Launch Order
+1. Infrastructure Services
+   - Zookeeper (Port: 2181)
+   - Kafka (Port: 9092)
+
+2. Microservices
+   - User Service (Port: 3001)
+   - Product Service (Port: 3004)
+   - Order Service (Port: 3002)
+   - Notification Service (Port: 3003)
+
+3. Frontend & Gateway
+   - Frontend Application (Port: 3000)
+   - API Gateway (Port: 8080)
+
+### Features
+- Parallel service execution
+- Dependency management
+- Shared library linking
+- Development hot-reloading
+- Terminal window organization
+
+### Usage
+```bash
+# Start all services
+.\start-services.bat
+
+# Services are launched in separate Windows Terminal tabs
+# Each service shows its own logs
+```
+
+### Terminal Window Layout
+```
+[Services Info] [Zookeeper] [Kafka] [Order Service]
+[User Service] [Product Service] [Notification Service]
+[Frontend] [API Gateway]
+```
+
+### Service Dependencies
+- Zookeeper must start before Kafka
+- Kafka must be ready before microservices
+- All services must be up before API Gateway
+- Frontend builds after services start
