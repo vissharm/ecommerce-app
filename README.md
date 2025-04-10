@@ -21,7 +21,7 @@
 - Socket.IO >= 4.8.x
 - JWT >= 8.5.x
 
-### System Requirements
+### System Requirements (Added just for sake of containerization technologies used)
 - Minimum 8GB RAM
 - 4 CPU cores
 - 20GB free disk space
