@@ -1,6 +1,9 @@
 # E-Commerce Microservices Application
 ### This is created for assignment and learning purpose
 
+Github URL: https://github.com/vissharm/ecommerce-app/tree/feature/submodules
+Demo vido: https://drive.google.com/file/d/1tsEWtJ17BzurBKE74Z_a1kbXQ7hwHTgD/view?usp=sharing
+
 ## Prerequisites
 
 ### Required Software Versions
