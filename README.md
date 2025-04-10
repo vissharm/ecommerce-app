@@ -952,16 +952,14 @@ sequenceDiagram
 1. **Authentication Flow**
    - JWT-based authentication
    - Token refresh mechanism
-   - Role-based access control
    - API key validation for service-to-service communication
 
 2. **Data Security**
    - Encryption at rest
    - TLS for data in transit
-   - PII data encryption
    - Audit logging
 
-### Scalability Design
+### Scalability Design (Future scope)
 
 1. **Horizontal Scaling**
    - Stateless services
@@ -977,29 +975,7 @@ sequenceDiagram
 
 ### Monitoring and Logging
 
-1. **Metrics Collection**
-   - Prometheus metrics
-   - Grafana dashboards
-   - Custom business metrics
-   - SLA monitoring
-
-2. **Logging Strategy**
-   - Centralized logging (ELK Stack)
+1. **Logging Strategy**
    - Log levels and retention
    - Error tracking
-   - Performance monitoring
-
-### Disaster Recovery
-
-1. **Backup Strategy**
-   - Daily automated backups
-   - Point-in-time recovery
-   - Cross-region replication
-   - Backup validation
-
-2. **Failover Process**
-   - Service redundancy
-   - Database failover
-   - Circuit breaker patterns
-   - Fallback mechanisms
    ```
