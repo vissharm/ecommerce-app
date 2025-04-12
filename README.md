@@ -4,14 +4,14 @@
 # Github URL: https://github.com/vissharm/ecommerce-app/tree/feature/submodules
 # Demo video: https://drive.google.com/file/d/1tsEWtJ17BzurBKE74Z_a1kbXQ7hwHTgD/view?usp=sharing
 
-Git modules of this monorepo repository, which could be worked by teams independently.
-#### https://github.com/vissharm/ecommerce-app-notification-service.git
-#### https://github.com/vissharm/ecommerce-app-frontend.git
-#### https://github.com/vissharm/ecommerce-app-order-service.git
-#### https://github.com/vissharm/ecommerce-app-product-service.git
-#### https://github.com/vissharm/ecommerce-app-user-service.git
-#### https://github.com/vissharm/ecommerce-app-api-gateway.git
-#### https://github.com/vissharm/ecommerce-app-shared.git
+### Git modules of this monorepo repository, which could be worked by teams independently.
+##### https://github.com/vissharm/ecommerce-app-notification-service.git
+##### https://github.com/vissharm/ecommerce-app-frontend.git
+##### https://github.com/vissharm/ecommerce-app-order-service.git
+##### https://github.com/vissharm/ecommerce-app-product-service.git
+##### https://github.com/vissharm/ecommerce-app-user-service.git
+##### https://github.com/vissharm/ecommerce-app-api-gateway.git
+##### https://github.com/vissharm/ecommerce-app-shared.git
 
 ## Prerequisites
 
