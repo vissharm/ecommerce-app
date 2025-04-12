@@ -4,7 +4,7 @@
 # FOR COURSE STUDENTS: CAUTION: REPO IS MADE PUBLIC FOR EVALUATION, SO DO NOT COPY, ALREADY SUBMITTED AND SENT TO PROFESSOR. FEEL FREE TO LEARN FROM IT AND APPLY CONCEPTS. ALWAYS APPRECIATE KNOWLEDGE SHARING.
 
 # Github URL: https://github.com/vissharm/ecommerce-app/tree/feature/submodules
-# Demo video: https://drive.google.com/file/d/1tsEWtJ17BzurBKE74Z_a1kbXQ7hwHTgD/view?usp=sharing
+# Demo video: https://drive.google.com/file/d/1nrV_Jwk2QDcnzVpjbdjJCRxSF97TYh4R/view?usp=drive_link
 
 ### Git modules of this monorepo repository, which could be worked by teams independently.
 - https://github.com/vissharm/ecommerce-app-notification-service.git
