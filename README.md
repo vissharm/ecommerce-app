@@ -136,3 +136,40 @@ npm run start
 npm run clean  # Removes node_modules and package-lock.json
 npm install    # Fresh installation
 ```
+
+# Application screenshots
+![image](https://github.com/user-attachments/assets/d41745c1-54ac-4106-a56f-a8969df414f5) 
+![image](https://github.com/user-attachments/assets/26158665-bd1c-47ba-9794-107853ba3f6a)    ![image](https://github.com/user-attachments/assets/d23ddff2-2d96-43f4-a75a-24eef81b859f)
+![image](https://github.com/user-attachments/assets/5841db62-f7a7-4fdb-ba0a-6cfa6784be44)
+![image](https://github.com/user-attachments/assets/fecffb82-02e7-470c-9eaa-0ad77b09322a)    ![image](https://github.com/user-attachments/assets/f7cae3ce-386e-445e-b4a6-393a42e567f0)
+![image](https://github.com/user-attachments/assets/9c0b4b31-cad7-4684-a5fd-0df7515d254e)
+![image](https://github.com/user-attachments/assets/91852003-2c74-43cb-8540-5c15edccee98)
+![image](https://github.com/user-attachments/assets/34debbb3-7bee-4f23-838f-ecc3395d201e)
+![image](https://github.com/user-attachments/assets/61588bd5-4fd6-4993-b570-eb75b39c3b98)
+![image](https://github.com/user-attachments/assets/1d2bff1b-8cac-40c4-a427-c08f7ecefbf3)
+![image](https://github.com/user-attachments/assets/6bf8ab52-12d6-435d-9a97-700bcda67d00)
+![image](https://github.com/user-attachments/assets/11522d7f-8b5f-4b69-9740-84a4412c5b04)
+![image](https://github.com/user-attachments/assets/422b3e8b-d5bf-4716-a289-8c2865205c4a)
+![image](https://github.com/user-attachments/assets/853d3c8c-55c7-4a6a-b4a3-2edc06f0adbf)
+![image](https://github.com/user-attachments/assets/99be9e89-7698-402c-af48-c94bc4aabd6d)
+![image](https://github.com/user-attachments/assets/0823d89c-298f-4d27-9baa-a39dbc9448e2)
+![image](https://github.com/user-attachments/assets/91237d1b-6d4c-4369-8c67-4af1b57f6fff)
+![image](https://github.com/user-attachments/assets/bea98586-d69d-4b34-b07a-f856fd5e7e8a)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
